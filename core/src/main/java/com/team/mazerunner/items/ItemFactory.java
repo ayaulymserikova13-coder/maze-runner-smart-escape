@@ -1,0 +1,23 @@
+package com.team.mazerunner.items;
+
+public class ItemFactory {
+
+    private ItemFactory() {
+    }
+
+    public static Item create(String type) {
+        if (Key.TYPE.equals(type)) {
+            return new Key();
+        }
+
+        if (Crowbar.TYPE.equals(type)) {
+            return new Crowbar();
+        }
+
+        if (Knife.TYPE.equals(type)) {
+            return new Knife();
+        }
+
+        throw new IllegalArgumentException("Unknown item type: " + type);
+    }
+}
