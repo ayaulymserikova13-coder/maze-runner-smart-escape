@@ -8,6 +8,10 @@ public class PatrolStrategy implements MovementStrategy {
 
     @Override
     public void move(Enemy enemy, Player player, LevelMap levelMap, float delta) {
+        if (enemy.isPatrolPaused(delta)) {
+            return;
+        }
+
         Vector2 target = enemy.getCurrentPatrolTarget();
         enemy.moveToward(target.x, target.y, enemy.getPatrolSpeed(), levelMap, delta);
 
