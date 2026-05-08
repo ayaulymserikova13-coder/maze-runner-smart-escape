@@ -319,7 +319,7 @@ public class Enemy {
         Vector2 nextStep = levelMap.findNextStep(x, y, targetX, targetY);
 
         if (nextStep == null) {
-            setState(EnemyState.RETURN);
+            handlePathFailure();
             return;
         }
 
@@ -353,6 +353,20 @@ public class Enemy {
 
             moveOnYAxis(diffY, stepDistance, levelMap);
         }
+    }
+
+    private void handlePathFailure() {
+        if (state == EnemyState.CHASE || state == EnemyState.ALERT) {
+            setState(EnemyState.SEARCH);
+            return;
+        }
+
+        if (state == EnemyState.SEARCH) {
+            searchAdvanceTimer = 0f;
+            return;
+        }
+
+        setState(EnemyState.RETURN);
     }
 
     private void moveOnXAxis(float diffX, float stepDistance, LevelMap levelMap) {
