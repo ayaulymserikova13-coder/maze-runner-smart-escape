@@ -15,13 +15,30 @@ public class Enemy {
     private static final float FLASHLIGHT_RANGE = LevelMap.TILE_SIZE * 4f;
     private static final float FLASHLIGHT_ANGLE = 38f;
     private static final float BACK_BLIND_ANGLE = 38f;
-    private static final float LOSE_TARGET_TIME = 2.5f;
+    private static final float CLOSE_DETECTION_RANGE = LevelMap.TILE_SIZE * 1.25f;
+    private static final float CLOSE_DETECTION_ANGLE = 120f;
+    private static final float ALERT_TRACK_RANGE = LevelMap.TILE_SIZE * 6f;
+    private static final float ALERT_TRACK_ANGLE = 145f;
+    private static final float SEARCH_DURATION = 5f;
+    private static final float SEARCH_ADVANCE_DURATION = 2.4f;
+    private static final float SEARCH_ADVANCE_SPEED_SCALE = 0.85f;
+    private static final float SEARCH_PATH_DISTANCE = LevelMap.TILE_SIZE * 2.5f;
+    private static final float SEARCH_SIDE_PATH_DISTANCE = LevelMap.TILE_SIZE * 1.6f;
+    private static final float SEARCH_TARGET_REACHED_DISTANCE = 8f;
+    private static final float SEARCH_SWEEP_SPEED = 210f;
+    private static final float CHASE_EXTRA_DISTANCE = LevelMap.TILE_SIZE * 3f;
+    private static final float CHASE_REACHED_DISTANCE = 8f;
+    private static final float CHASE_STUCK_TIME = 1.8f;
+    private static final float CHASE_STUCK_DISTANCE = 1.25f;
     private static final float STEALTH_REACTION_TIME = 6f;
     private static final float STEALTH_KILL_RANGE = LevelMap.TILE_SIZE * 1.15f;
     private static final float TILE_CENTER_EPSILON = 2f;
     private static final float MIN_PATROL_PAUSE = 0.15f;
     private static final float MAX_PATROL_PAUSE = 0.75f;
     private static final float TURN_SPEED_DEGREES = 360f;
+    private static final float SCAN_SPEED_DEGREES = 320f;
+    private static final float FULL_SCAN_DEGREES = 360f;
+    private static final float TURN_BACK_SCAN_ANGLE = 135f;
     private static final float TURN_EPSILON_DEGREES = 3f;
     private static final int FLASHLIGHT_RAYS = 28;
 
@@ -42,9 +59,28 @@ public class Enemy {
     private float timePlayerBehind;
     private float lastKnownPlayerX;
     private float lastKnownPlayerY;
+    private float previousSeenPlayerX;
+    private float previousSeenPlayerY;
+    private boolean hasPreviousSeenPlayer;
+    private float chaseStuckTimer;
+    private float lastChaseCheckX;
+    private float lastChaseCheckY;
     private float currentAngle;
     private float targetAngle;
+    private float lastSeenPlayerAngle;
+    private float angleAfterScan;
+    private float scanRemainingDegrees;
+    private float searchTimer;
+    private float searchAdvanceTimer;
+    private float searchBaseAngle;
+    private float searchSweepAngle;
+    private float searchTargetX;
+    private float searchTargetY;
+    private boolean scanning;
+    private boolean searchTargetReady;
+    private boolean targetVisible;
     private boolean vulnerableToStealthKill;
+    private EnemyState stateAfterScan = EnemyState.PATROL;
     private final Vector2 facingDirection = new Vector2(1f, 0f);
 
     private EnemyState state = EnemyState.PATROL;
@@ -74,8 +110,16 @@ public class Enemy {
         }
 
         updateState(player, levelMap, delta);
+        if (scanning) {
+            updateScan(delta);
+            bounds.setPosition(x, y);
+            return;
+        }
+
         currentStrategy.move(this, player, levelMap, delta);
-        updateTurn(delta);
+        if (!scanning) {
+            updateTurn(delta);
+        }
         bounds.setPosition(x, y);
     }
 
@@ -90,7 +134,7 @@ public class Enemy {
         if (state == EnemyState.CHASE || state == EnemyState.ALERT) {
             cloakColor = new Color(0.38f, 0.045f, 0.065f, 1f);
             accentColor = new Color(0.96f, 0.18f, 0.16f, 1f);
-        } else if (state == EnemyState.RETURN) {
+        } else if (state == EnemyState.SEARCH || state == EnemyState.RETURN) {
             cloakColor = new Color(0.36f, 0.24f, 0.10f, 1f);
             accentColor = new Color(0.90f, 0.54f, 0.18f, 1f);
         } else {
@@ -119,7 +163,7 @@ public class Enemy {
             outerColor = new Color(0.40f, 0.08f, 0.07f, 0.035f);
             midColor = new Color(0.48f, 0.12f, 0.09f, 0.055f);
             innerColor = new Color(0.58f, 0.18f, 0.12f, 0.075f);
-        } else if (state == EnemyState.RETURN) {
+        } else if (state == EnemyState.SEARCH || state == EnemyState.RETURN) {
             outerColor = new Color(0.23f, 0.20f, 0.13f, 0.030f);
             midColor = new Color(0.32f, 0.27f, 0.16f, 0.045f);
             innerColor = new Color(0.42f, 0.34f, 0.18f, 0.060f);
@@ -315,10 +359,11 @@ public class Enemy {
         float movement = Math.signum(diffX) * Math.min(Math.abs(diffX), stepDistance);
         float nextX = x + movement;
 
-        facingDirection.set(Math.signum(diffX), 0f);
-        setTargetAngleFromDirection(facingDirection);
+        if (!isTrackingVisibleTarget()) {
+            prepareDirectionChange(Math.signum(diffX), 0f);
+        }
 
-        if (isTurning()) {
+        if (state != EnemyState.CHASE && state != EnemyState.SEARCH && isTurning()) {
             return;
         }
 
@@ -331,10 +376,11 @@ public class Enemy {
         float movement = Math.signum(diffY) * Math.min(Math.abs(diffY), stepDistance);
         float nextY = y + movement;
 
-        facingDirection.set(0f, Math.signum(diffY));
-        setTargetAngleFromDirection(facingDirection);
+        if (!isTrackingVisibleTarget()) {
+            prepareDirectionChange(0f, Math.signum(diffY));
+        }
 
-        if (isTurning()) {
+        if (state != EnemyState.CHASE && state != EnemyState.SEARCH && isTurning()) {
             return;
         }
 
@@ -351,6 +397,26 @@ public class Enemy {
         targetAngle = normalizeAngle(direction.angleDeg());
     }
 
+    private boolean prepareDirectionChange(float directionX, float directionY) {
+        Vector2 nextDirection = new Vector2(directionX, directionY);
+
+        if (nextDirection.isZero(0.001f)) {
+            return false;
+        }
+
+        float nextAngle = normalizeAngle(nextDirection.angleDeg());
+        boolean turnedBack = Math.abs(signedAngleDifference(targetAngle, nextAngle)) >= TURN_BACK_SCAN_ANGLE;
+        facingDirection.set(nextDirection);
+        targetAngle = nextAngle;
+
+        if (state == EnemyState.PATROL && turnedBack && !scanning) {
+            startScan(EnemyState.PATROL);
+            return true;
+        }
+
+        return false;
+    }
+
     private void updateTurn(float delta) {
         float difference = signedAngleDifference(currentAngle, targetAngle);
         float step = TURN_SPEED_DEGREES * delta;
@@ -361,6 +427,30 @@ public class Enemy {
         }
 
         currentAngle = normalizeAngle(currentAngle + Math.signum(difference) * step);
+    }
+
+    private void updateScan(float delta) {
+        float step = Math.min(SCAN_SPEED_DEGREES * delta, scanRemainingDegrees);
+        currentAngle = normalizeAngle(currentAngle - step);
+        targetAngle = currentAngle;
+        facingDirection.set(getVisualDirection());
+        scanRemainingDegrees -= step;
+
+        if (scanRemainingDegrees <= 0f) {
+            scanning = false;
+            scanRemainingDegrees = 0f;
+            currentAngle = angleAfterScan;
+            targetAngle = angleAfterScan;
+            facingDirection.set(getVisualDirection());
+            setState(stateAfterScan);
+        }
+    }
+
+    private void startScan(EnemyState nextState) {
+        scanning = true;
+        angleAfterScan = targetAngle;
+        scanRemainingDegrees = FULL_SCAN_DEGREES;
+        stateAfterScan = nextState;
     }
 
     private boolean isTurning() {
@@ -503,8 +593,24 @@ public class Enemy {
         patrolPauseTimer = random.nextFloat() * MAX_PATROL_PAUSE;
         timeSinceSeenPlayer = 0f;
         timePlayerBehind = 0f;
+        hasPreviousSeenPlayer = false;
+        chaseStuckTimer = 0f;
+        lastChaseCheckX = x;
+        lastChaseCheckY = y;
+        scanning = false;
+        targetVisible = false;
+        scanRemainingDegrees = 0f;
+        lastSeenPlayerAngle = 0f;
+        angleAfterScan = 0f;
+        searchTimer = 0f;
+        searchAdvanceTimer = 0f;
+        searchSweepAngle = 0f;
+        searchTargetReady = false;
+        stateAfterScan = EnemyState.PATROL;
         vulnerableToStealthKill = false;
         facingDirection.set(1f, 0f);
+        currentAngle = 0f;
+        targetAngle = 0f;
         setState(EnemyState.PATROL);
     }
 
@@ -539,6 +645,105 @@ public class Enemy {
         return Vector2.dst(x, y, targetX, targetY) <= distance;
     }
 
+    public void searchLastKnownPosition(LevelMap levelMap, float delta) {
+        prepareSearchTarget(levelMap);
+        searchTimer -= delta;
+
+        if (searchTimer <= 0f) {
+            setState(EnemyState.RETURN);
+            return;
+        }
+
+        moveAlongSearchPath(levelMap, delta);
+        searchSweepAngle = normalizeAngle(searchSweepAngle + SEARCH_SWEEP_SPEED * delta);
+        currentAngle = normalizeAngle(searchBaseAngle + searchSweepAngle);
+        targetAngle = currentAngle;
+        facingDirection.set(getVisualDirection());
+    }
+
+    private void prepareSearchTarget(LevelMap levelMap) {
+        if (searchTargetReady) {
+            return;
+        }
+
+        searchTargetX = lastKnownPlayerX;
+        searchTargetY = lastKnownPlayerY;
+
+        trySetSearchTarget(levelMap, lastSeenPlayerAngle, SEARCH_PATH_DISTANCE);
+        trySetSearchTarget(levelMap, lastSeenPlayerAngle + 45f, SEARCH_SIDE_PATH_DISTANCE);
+        trySetSearchTarget(levelMap, lastSeenPlayerAngle - 45f, SEARCH_SIDE_PATH_DISTANCE);
+        trySetSearchTarget(levelMap, lastSeenPlayerAngle + 90f, SEARCH_SIDE_PATH_DISTANCE);
+        trySetSearchTarget(levelMap, lastSeenPlayerAngle - 90f, SEARCH_SIDE_PATH_DISTANCE);
+
+        searchTargetReady = true;
+    }
+
+    private void trySetSearchTarget(LevelMap levelMap, float angle, float distance) {
+        if (!isCloseTo(searchTargetX, searchTargetY, SEARCH_TARGET_REACHED_DISTANCE)) {
+            return;
+        }
+
+        Vector2 direction = new Vector2(1f, 0f).rotateDeg(angle).nor();
+        float candidateX = lastKnownPlayerX + direction.x * distance;
+        float candidateY = lastKnownPlayerY + direction.y * distance;
+        float safeX = levelMap.getTileCenterX(candidateX + bounds.width / 2f);
+        float safeY = levelMap.getTileCenterY(candidateY + bounds.height / 2f);
+
+        if (!levelMap.isBlocked(safeX, safeY, (int) bounds.width, (int) bounds.height) &&
+                levelMap.canReach(x, y, safeX, safeY)) {
+            searchTargetX = safeX;
+            searchTargetY = safeY;
+        }
+    }
+
+    private void moveAlongSearchPath(LevelMap levelMap, float delta) {
+        if (searchAdvanceTimer <= 0f) {
+            return;
+        }
+
+        searchAdvanceTimer = Math.max(0f, searchAdvanceTimer - delta);
+
+        if (isCloseTo(searchTargetX, searchTargetY, SEARCH_TARGET_REACHED_DISTANCE)) {
+            searchAdvanceTimer = 0f;
+            return;
+        }
+
+        moveToward(searchTargetX, searchTargetY, getPatrolSpeed() * SEARCH_ADVANCE_SPEED_SCALE, levelMap, delta);
+    }
+
+    public void finishChaseIfAtLastKnownPosition(float delta) {
+        if (state != EnemyState.CHASE && state != EnemyState.ALERT) {
+            return;
+        }
+
+        if (targetVisible) {
+            chaseStuckTimer = 0f;
+            lastChaseCheckX = x;
+            lastChaseCheckY = y;
+            return;
+        }
+
+        if (isCloseTo(lastKnownPlayerX, lastKnownPlayerY, CHASE_REACHED_DISTANCE)) {
+            timePlayerBehind = 0f;
+            setState(EnemyState.SEARCH);
+            return;
+        }
+
+        if (Vector2.dst(x, y, lastChaseCheckX, lastChaseCheckY) <= CHASE_STUCK_DISTANCE) {
+            chaseStuckTimer += delta;
+        } else {
+            chaseStuckTimer = 0f;
+            lastChaseCheckX = x;
+            lastChaseCheckY = y;
+        }
+
+        if (chaseStuckTimer >= CHASE_STUCK_TIME) {
+            chaseStuckTimer = 0f;
+            timePlayerBehind = 0f;
+            setState(EnemyState.SEARCH);
+        }
+    }
+
     public void setState(EnemyState nextState) {
         if (state == nextState) {
             return;
@@ -547,9 +752,21 @@ public class Enemy {
         state = nextState;
 
         if (state == EnemyState.PATROL) {
+            hasPreviousSeenPlayer = false;
             currentStrategy = new PatrolStrategy();
         } else if (state == EnemyState.CHASE || state == EnemyState.ALERT) {
+            scanning = false;
+            chaseStuckTimer = 0f;
+            lastChaseCheckX = x;
+            lastChaseCheckY = y;
             currentStrategy = new ChaseStrategy();
+        } else if (state == EnemyState.SEARCH) {
+            searchTimer = SEARCH_DURATION;
+            searchAdvanceTimer = SEARCH_ADVANCE_DURATION;
+            searchBaseAngle = lastSeenPlayerAngle;
+            searchSweepAngle = 0f;
+            searchTargetReady = false;
+            currentStrategy = new SearchStrategy();
         } else if (state == EnemyState.RETURN) {
             currentStrategy = new ReturnStrategy();
         }
@@ -581,24 +798,21 @@ public class Enemy {
 
     private void updateState(Player player, LevelMap levelMap, float delta) {
         vulnerableToStealthKill = false;
+        targetVisible = false;
 
-        if (canDetectPlayer(player, levelMap)) {
+        if (canDetectPlayer(player, levelMap) || canTrackAlertPlayer(player, levelMap)) {
+            targetVisible = true;
             timeSinceSeenPlayer = 0f;
             timePlayerBehind = 0f;
-            lastKnownPlayerX = player.getX();
-            lastKnownPlayerY = player.getY();
+            updateLastKnownPlayerPosition(player, levelMap);
+            facePlayer(player);
+            scanning = false;
             setState(EnemyState.CHASE);
             return;
         }
 
         if (state == EnemyState.CHASE) {
             timeSinceSeenPlayer += delta;
-
-            if (timeSinceSeenPlayer >= LOSE_TARGET_TIME) {
-                timePlayerBehind = 0f;
-                setState(EnemyState.RETURN);
-            }
-
             return;
         }
 
@@ -612,11 +826,86 @@ public class Enemy {
             return false;
         }
 
-        return isInsideFlashlight(toPlayer);
+        return isInsideFlashlight(toPlayer) || isInsideCloseAwareness(toPlayer);
+    }
+
+    private boolean canTrackAlertPlayer(Player player, LevelMap levelMap) {
+        if (state != EnemyState.CHASE && state != EnemyState.SEARCH && state != EnemyState.ALERT) {
+            return false;
+        }
+
+        Vector2 toPlayer = vectorToPlayer(player);
+
+        if (toPlayer.isZero(1f) ||
+                toPlayer.len() > ALERT_TRACK_RANGE ||
+                !hasLineOfSightToPlayer(player, levelMap)) {
+            return false;
+        }
+
+        float angle = getVisualDirection().angleDeg(toPlayer);
+        return angle <= ALERT_TRACK_ANGLE && angle < 180f - BACK_BLIND_ANGLE;
+    }
+
+    private void updateLastKnownPlayerPosition(Player player, LevelMap levelMap) {
+        float playerX = player.getX();
+        float playerY = player.getY();
+        Vector2 escapeDirection;
+
+        if (hasPreviousSeenPlayer) {
+            escapeDirection = new Vector2(playerX - previousSeenPlayerX, playerY - previousSeenPlayerY);
+        } else {
+            escapeDirection = new Vector2(playerX - x, playerY - y);
+        }
+
+        lastKnownPlayerX = levelMap.getTileCenterX(playerX + player.getWidth() / 2f);
+        lastKnownPlayerY = levelMap.getTileCenterY(playerY + player.getHeight() / 2f);
+
+        if (!escapeDirection.isZero(1f)) {
+            escapeDirection.nor();
+            float extendedX = playerX + escapeDirection.x * CHASE_EXTRA_DISTANCE;
+            float extendedY = playerY + escapeDirection.y * CHASE_EXTRA_DISTANCE;
+            float safeExtendedX = levelMap.getTileCenterX(extendedX + bounds.width / 2f);
+            float safeExtendedY = levelMap.getTileCenterY(extendedY + bounds.height / 2f);
+
+            if (!levelMap.isBlocked(safeExtendedX, safeExtendedY, (int) bounds.width, (int) bounds.height) &&
+                    levelMap.canReach(x, y, safeExtendedX, safeExtendedY)) {
+                lastKnownPlayerX = safeExtendedX;
+                lastKnownPlayerY = safeExtendedY;
+            }
+        }
+
+        previousSeenPlayerX = playerX;
+        previousSeenPlayerY = playerY;
+        hasPreviousSeenPlayer = true;
+    }
+
+    private void facePlayer(Player player) {
+        Vector2 toPlayer = vectorToPlayer(player);
+
+        if (toPlayer.isZero(1f)) {
+            return;
+        }
+
+        lastSeenPlayerAngle = normalizeAngle(toPlayer.angleDeg());
+        targetAngle = lastSeenPlayerAngle;
+        facingDirection.set(toPlayer).nor();
+    }
+
+    private boolean isTrackingVisibleTarget() {
+        return (state == EnemyState.CHASE || state == EnemyState.ALERT) && targetVisible;
     }
 
     private boolean isInsideFlashlight(Vector2 toPlayer) {
-        return toPlayer.len() <= FLASHLIGHT_RANGE && facingDirection.angleDeg(toPlayer) <= FLASHLIGHT_ANGLE;
+        return toPlayer.len() <= FLASHLIGHT_RANGE && getVisualDirection().angleDeg(toPlayer) <= FLASHLIGHT_ANGLE;
+    }
+
+    private boolean isInsideCloseAwareness(Vector2 toPlayer) {
+        if (toPlayer.len() > CLOSE_DETECTION_RANGE) {
+            return false;
+        }
+
+        float angle = getVisualDirection().angleDeg(toPlayer);
+        return angle <= CLOSE_DETECTION_ANGLE && angle < 180f - BACK_BLIND_ANGLE;
     }
 
     private void renderFacingDirection(ShapeRenderer shapeRenderer, Color accentColor) {

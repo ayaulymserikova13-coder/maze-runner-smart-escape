@@ -14,5 +14,7 @@ public class ChaseStrategy implements MovementStrategy {
                 levelMap,
                 delta
         );
+
+        enemy.finishChaseIfAtLastKnownPosition(delta);
     }
 }

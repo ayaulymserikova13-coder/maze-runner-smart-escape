@@ -4,6 +4,7 @@ public enum EnemyState {
     PATROL,
     ALERT,
     CHASE,
+    SEARCH,
     RETURN,
     DEAD
 }
