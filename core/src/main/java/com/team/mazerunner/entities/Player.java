@@ -12,13 +12,20 @@ import java.util.Set;
 
 public class Player {
 
+    public static final int MAX_HP = 3;
+
+    private static final float DISGUISE_DURATION = 5f;
+    private static final float HEAL_EFFECT_DURATION = 1.1f;
+
     private float x;
     private float y;
     private float facingX = 1f;
     private float facingY = 0f;
+    private float disguiseTimer;
+    private float healEffectTimer;
 
     private final float speed = 250f;
-    private int hp = 3;
+    private int hp = MAX_HP;
     private final Set<String> inventory = new LinkedHashSet<>();
     private String activeItem;
 
@@ -36,12 +43,78 @@ public class Player {
     }
 
     public void render(ShapeRenderer shapeRenderer) {
+        if (isDisguised()) {
+            renderDisguiseEffect(shapeRenderer);
+            renderHealEffect(shapeRenderer);
+            return;
+        }
+
         renderShadow(shapeRenderer);
         renderCloak(shapeRenderer);
         renderLegs(shapeRenderer);
         renderHead(shapeRenderer);
         renderArms(shapeRenderer);
         renderHeldItem(shapeRenderer);
+        renderHealEffect(shapeRenderer);
+    }
+
+    public void update(float delta) {
+        disguiseTimer = Math.max(0f, disguiseTimer - delta);
+        healEffectTimer = Math.max(0f, healEffectTimer - delta);
+    }
+
+    private void renderDisguiseEffect(ShapeRenderer shapeRenderer) {
+        float pulse = disguiseTimer - (int) disguiseTimer;
+        float shimmerOffset = pulse < 0.5f ? 0f : 2f;
+
+        shapeRenderer.setColor(new Color(0.010f, 0.015f, 0.018f, 1f));
+        shapeRenderer.rect(x + 7, y - 3, width - 14, 3);
+
+        shapeRenderer.setColor(new Color(0.035f, 0.080f, 0.085f, 1f));
+        shapeRenderer.rect(x + 10, y + 5, 12, 19);
+        shapeRenderer.circle(x + 16, y + 24, 6);
+
+        shapeRenderer.setColor(new Color(0.11f, 0.28f, 0.27f, 1f));
+        shapeRenderer.rect(x + 8 + shimmerOffset, y + 7, 2, 14);
+        shapeRenderer.rect(x + 23 - shimmerOffset, y + 7, 2, 14);
+        shapeRenderer.rect(x + 11, y + 27, 10, 2);
+        shapeRenderer.rect(x + 12, y + 3, 8, 2);
+
+        shapeRenderer.setColor(new Color(0.44f, 0.84f, 0.76f, 1f));
+        shapeRenderer.rect(x + 6, y + 15 + shimmerOffset, 6, 1);
+        shapeRenderer.rect(x + 20, y + 19 - shimmerOffset, 7, 1);
+        shapeRenderer.rect(x + 13, y + 23, 2, 2);
+        shapeRenderer.rect(x + 19, y + 11, 2, 2);
+
+        shapeRenderer.setColor(new Color(0.19f, 0.42f, 0.40f, 1f));
+        shapeRenderer.rect(x + 4, y + 9, 3, 1);
+        shapeRenderer.rect(x + 25, y + 26, 3, 1);
+        shapeRenderer.rect(x + 17, y + 31, 1, 3);
+    }
+
+    private void renderHealEffect(ShapeRenderer shapeRenderer) {
+        if (healEffectTimer <= 0f) {
+            return;
+        }
+
+        float progress = 1f - healEffectTimer / HEAL_EFFECT_DURATION;
+        float lift = progress * 12f;
+        float centerX = x + width / 2f;
+        float baseY = y + height + 8f + lift;
+
+        shapeRenderer.setColor(new Color(0.04f, 0.16f, 0.09f, 1f));
+        shapeRenderer.rect(centerX - 3, baseY - 9, 6, 18);
+        shapeRenderer.rect(centerX - 9, baseY - 3, 18, 6);
+
+        shapeRenderer.setColor(new Color(0.32f, 0.90f, 0.48f, 1f));
+        shapeRenderer.rect(centerX - 2, baseY - 8, 4, 16);
+        shapeRenderer.rect(centerX - 8, baseY - 2, 16, 4);
+
+        shapeRenderer.setColor(new Color(0.70f, 1f, 0.76f, 1f));
+        shapeRenderer.rect(centerX - 1, baseY + 1, 2, 5);
+        shapeRenderer.rect(centerX + 7, baseY + 5, 3, 3);
+        shapeRenderer.rect(centerX - 11, baseY + 2, 3, 3);
+        shapeRenderer.rect(centerX + 5, baseY - 10, 2, 2);
     }
 
     private void renderShadow(ShapeRenderer shapeRenderer) {
@@ -271,6 +344,22 @@ public class Player {
         return hp <= 0;
     }
 
+    public boolean isFullHealth() {
+        return hp >= MAX_HP;
+    }
+
+    public boolean isDisguised() {
+        return disguiseTimer > 0f;
+    }
+
+    public float getDisguiseTimeRemaining() {
+        return disguiseTimer;
+    }
+
+    public void activateDisguise() {
+        disguiseTimer = DISGUISE_DURATION;
+    }
+
     public Rectangle getBounds() {
         return bounds;
     }
@@ -345,7 +434,12 @@ public class Player {
         hp = Math.max(0, hp - amount);
     }
 
+    public void heal(int amount) {
+        hp = Math.min(MAX_HP, hp + amount);
+        healEffectTimer = HEAL_EFFECT_DURATION;
+    }
+
     public void restoreHp(int value) {
-        hp = Math.max(0, value);
+        hp = Math.min(MAX_HP, Math.max(0, value));
     }
 }

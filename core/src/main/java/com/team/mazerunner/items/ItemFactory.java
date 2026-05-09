@@ -18,6 +18,14 @@ public class ItemFactory {
             return new Knife();
         }
 
+        if (Disguise.TYPE.equals(type)) {
+            return new Disguise();
+        }
+
+        if (Medkit.TYPE.equals(type)) {
+            return new Medkit();
+        }
+
         throw new IllegalArgumentException("Unknown item type: " + type);
     }
 }

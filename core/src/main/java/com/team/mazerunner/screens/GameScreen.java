@@ -12,6 +12,7 @@ import com.team.mazerunner.Main;
 import com.team.mazerunner.entities.Player;
 import com.team.mazerunner.input.PlayerInputHandler;
 import com.team.mazerunner.items.Crowbar;
+import com.team.mazerunner.items.Disguise;
 import com.team.mazerunner.items.Key;
 import com.team.mazerunner.items.Knife;
 import com.team.mazerunner.world.LevelMap;
@@ -112,6 +113,7 @@ public class GameScreen implements Screen {
         }
 
         inputHandler.update(delta);
+        player.update(delta);
         levelMap.update(delta, player);
 
         if (player.isDead()) {
@@ -143,7 +145,7 @@ public class GameScreen implements Screen {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         drawPixelPanel(16, Main.SCREEN_HEIGHT - 72, 220, 52, new Color(0.68f, 0.46f, 0.24f, 1f));
         drawPixelPanel(Main.SCREEN_WIDTH / 2f - 125, Main.SCREEN_HEIGHT - 66, 250, 42, new Color(0.24f, 0.58f, 0.56f, 1f));
-        drawPixelPanel(Main.SCREEN_WIDTH - 292, Main.SCREEN_HEIGHT - 76, 276, 64, new Color(0.68f, 0.46f, 0.24f, 1f));
+        drawPixelPanel(Main.SCREEN_WIDTH - 344, Main.SCREEN_HEIGHT - 76, 328, 64, new Color(0.68f, 0.46f, 0.24f, 1f));
         drawPixelPanel(18, 18, 610, 42, new Color(0.24f, 0.58f, 0.56f, 1f));
         renderHealthIcons();
         renderInventorySlots();
@@ -155,13 +157,17 @@ public class GameScreen implements Screen {
         font.setColor(new Color(0.82f, 0.68f, 0.46f, 1f));
         font.draw(game.batch, "HP", 32, Main.SCREEN_HEIGHT - 35);
         font.draw(game.batch, "LEVEL " + levelMap.getLevelNumber(), Main.SCREEN_WIDTH / 2f - 34, Main.SCREEN_HEIGHT - 39);
-        font.draw(game.batch, "ITEMS", Main.SCREEN_WIDTH - 278, Main.SCREEN_HEIGHT - 29);
+        font.draw(game.batch, "ITEMS", Main.SCREEN_WIDTH - 330, Main.SCREEN_HEIGHT - 29);
         font.setColor(new Color(0.83f, 0.90f, 0.84f, 1f));
         font.draw(game.batch, levelMap.getStatusMessage(), 32, 43);
         font.setColor(new Color(0.48f, 0.78f, 0.72f, 1f));
-        font.draw(game.batch, "1 KEY   2 CROWBAR   3 KNIFE", Main.SCREEN_WIDTH - 280, Main.SCREEN_HEIGHT - 63);
+        font.draw(game.batch, "1 KEY  2 CROWBAR  3 KNIFE  4 DISGUISE", Main.SCREEN_WIDTH - 336, Main.SCREEN_HEIGHT - 63);
         font.setColor(new Color(0.70f, 0.62f, 0.52f, 1f));
         font.draw(game.batch, "E use   F kill   Esc pause", Main.SCREEN_WIDTH - 224, 43);
+        if (player.isDisguised()) {
+            font.setColor(new Color(0.58f, 0.86f, 0.78f, 1f));
+            font.draw(game.batch, "DISGUISE " + (int) Math.ceil(player.getDisguiseTimeRemaining()) + "s", 190, Main.SCREEN_HEIGHT - 35);
+        }
 
         game.batch.end();
     }
@@ -201,9 +207,10 @@ public class GameScreen implements Screen {
     }
 
     private void renderInventorySlots() {
-        drawInventorySlot(Main.SCREEN_WIDTH - 172, Main.SCREEN_HEIGHT - 54, Key.TYPE, new Color(0.92f, 0.63f, 0.12f, 1f));
-        drawInventorySlot(Main.SCREEN_WIDTH - 120, Main.SCREEN_HEIGHT - 54, Crowbar.TYPE, new Color(0.64f, 0.31f, 0.15f, 1f));
-        drawInventorySlot(Main.SCREEN_WIDTH - 68, Main.SCREEN_HEIGHT - 54, Knife.TYPE, new Color(0.72f, 0.78f, 0.82f, 1f));
+        drawInventorySlot(Main.SCREEN_WIDTH - 224, Main.SCREEN_HEIGHT - 54, Key.TYPE, new Color(0.92f, 0.63f, 0.12f, 1f));
+        drawInventorySlot(Main.SCREEN_WIDTH - 172, Main.SCREEN_HEIGHT - 54, Crowbar.TYPE, new Color(0.64f, 0.31f, 0.15f, 1f));
+        drawInventorySlot(Main.SCREEN_WIDTH - 120, Main.SCREEN_HEIGHT - 54, Knife.TYPE, new Color(0.72f, 0.78f, 0.82f, 1f));
+        drawInventorySlot(Main.SCREEN_WIDTH - 68, Main.SCREEN_HEIGHT - 54, Disguise.TYPE, new Color(0.52f, 0.72f, 0.68f, 1f));
     }
 
     private void drawInventorySlot(float x, float y, String itemType, Color itemColor) {
@@ -257,6 +264,18 @@ public class GameScreen implements Screen {
             shapeRenderer.triangle(x + 11, y + 18, x + 23, y + 18, x + 18, y + 29);
             shapeRenderer.setColor(new Color(0.96f, 0.98f, 1f, 1f));
             shapeRenderer.triangle(x + 16, y + 19, x + 22, y + 19, x + 18, y + 28);
+        } else if (Disguise.TYPE.equals(itemType)) {
+            shapeRenderer.setColor(new Color(0.08f, 0.07f, 0.12f, 1f));
+            shapeRenderer.rect(x + 9, y + 9, 16, 16);
+            shapeRenderer.circle(x + 17, y + 23, 6);
+            shapeRenderer.setColor(itemColor);
+            shapeRenderer.rect(x + 11, y + 11, 12, 12);
+            shapeRenderer.circle(x + 17, y + 22, 5);
+            shapeRenderer.setColor(new Color(0.06f, 0.055f, 0.08f, 1f));
+            shapeRenderer.rect(x + 12, y + 19, 10, 3);
+            shapeRenderer.setColor(new Color(0.84f, 0.95f, 0.88f, 1f));
+            shapeRenderer.rect(x + 13, y + 22, 2, 2);
+            shapeRenderer.rect(x + 20, y + 22, 2, 2);
         }
     }
 
