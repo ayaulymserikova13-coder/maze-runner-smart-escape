@@ -12,13 +12,15 @@ import java.util.Set;
 
 public class Player {
 
+    public static final int MAX_HP = 3;
+
     private float x;
     private float y;
     private float facingX = 1f;
     private float facingY = 0f;
 
     private final float speed = 250f;
-    private int hp = 3;
+    private int hp = MAX_HP;
     private final Set<String> inventory = new LinkedHashSet<>();
     private String activeItem;
 
@@ -271,6 +273,10 @@ public class Player {
         return hp <= 0;
     }
 
+    public boolean isFullHealth() {
+        return hp >= MAX_HP;
+    }
+
     public Rectangle getBounds() {
         return bounds;
     }
@@ -345,7 +351,11 @@ public class Player {
         hp = Math.max(0, hp - amount);
     }
 
+    public void heal(int amount) {
+        hp = Math.min(MAX_HP, hp + amount);
+    }
+
     public void restoreHp(int value) {
-        hp = Math.max(0, value);
+        hp = Math.min(MAX_HP, Math.max(0, value));
     }
 }

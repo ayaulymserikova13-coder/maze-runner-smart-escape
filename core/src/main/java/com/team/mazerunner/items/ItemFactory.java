@@ -18,6 +18,10 @@ public class ItemFactory {
             return new Knife();
         }
 
+        if (Medkit.TYPE.equals(type)) {
+            return new Medkit();
+        }
+
         throw new IllegalArgumentException("Unknown item type: " + type);
     }
 }
