@@ -4,9 +4,11 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.team.mazerunner.items.Crowbar;
+import com.team.mazerunner.items.Disguise;
 import com.team.mazerunner.items.Item;
 import com.team.mazerunner.items.Key;
 import com.team.mazerunner.items.Knife;
+import com.team.mazerunner.items.Medkit;
 
 public class ItemEntity {
 
@@ -33,6 +35,10 @@ public class ItemEntity {
             renderCrowbar(shapeRenderer);
         } else if (Knife.TYPE.equals(item.getType())) {
             renderKnife(shapeRenderer);
+        } else if (Disguise.TYPE.equals(item.getType())) {
+            renderDisguise(shapeRenderer);
+        } else if (Medkit.TYPE.equals(item.getType())) {
+            renderMedkit(shapeRenderer);
         }
     }
 
@@ -104,6 +110,41 @@ public class ItemEntity {
         );
         shapeRenderer.setColor(new Color(0.28f, 0.32f, 0.35f, 1f));
         shapeRenderer.rect(bounds.x + 16, bounds.y + 18, 2, 11);
+    }
+
+    private void renderDisguise(ShapeRenderer shapeRenderer) {
+        shapeRenderer.setColor(new Color(0.035f, 0.030f, 0.045f, 1f));
+        shapeRenderer.rect(bounds.x + 7, bounds.y + 8, 22, 18);
+        shapeRenderer.circle(bounds.x + 18, bounds.y + 26, 9);
+
+        shapeRenderer.setColor(new Color(0.18f, 0.16f, 0.26f, 1f));
+        shapeRenderer.rect(bounds.x + 9, bounds.y + 10, 18, 15);
+        shapeRenderer.circle(bounds.x + 18, bounds.y + 25, 7);
+
+        shapeRenderer.setColor(new Color(0.52f, 0.72f, 0.68f, 1f));
+        shapeRenderer.rect(bounds.x + 12, bounds.y + 23, 4, 3);
+        shapeRenderer.rect(bounds.x + 20, bounds.y + 23, 4, 3);
+
+        shapeRenderer.setColor(new Color(0.08f, 0.07f, 0.12f, 1f));
+        shapeRenderer.rect(bounds.x + 11, bounds.y + 18, 15, 3);
+        shapeRenderer.rect(bounds.x + 14, bounds.y + 12, 8, 3);
+    }
+
+    private void renderMedkit(ShapeRenderer shapeRenderer) {
+        shapeRenderer.setColor(new Color(0.08f, 0.08f, 0.075f, 1f));
+        shapeRenderer.rect(bounds.x + 5, bounds.y + 8, 26, 20);
+        shapeRenderer.rect(bounds.x + 11, bounds.y + 25, 14, 5);
+
+        shapeRenderer.setColor(new Color(0.82f, 0.86f, 0.78f, 1f));
+        shapeRenderer.rect(bounds.x + 7, bounds.y + 10, 22, 16);
+        shapeRenderer.rect(bounds.x + 13, bounds.y + 26, 10, 3);
+
+        shapeRenderer.setColor(new Color(0.60f, 0.08f, 0.10f, 1f));
+        shapeRenderer.rect(bounds.x + 15, bounds.y + 13, 6, 10);
+        shapeRenderer.rect(bounds.x + 12, bounds.y + 16, 12, 4);
+
+        shapeRenderer.setColor(new Color(0.96f, 0.98f, 0.88f, 1f));
+        shapeRenderer.rect(bounds.x + 8, bounds.y + 23, 8, 2);
     }
 
     public Item getItem() {

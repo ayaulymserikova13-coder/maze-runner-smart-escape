@@ -555,6 +555,10 @@ public class Enemy {
             return false;
         }
 
+        if (player.isDisguised()) {
+            return false;
+        }
+
         if (!overlaps(player)) {
             return false;
         }
@@ -813,6 +817,10 @@ public class Enemy {
     private void updateState(Player player, LevelMap levelMap, float delta) {
         vulnerableToStealthKill = false;
         targetVisible = false;
+
+        if (player.isDisguised()) {
+            return;
+        }
 
         if (canDetectPlayer(player, levelMap) || canTrackAlertPlayer(player, levelMap)) {
             targetVisible = true;

@@ -19,6 +19,10 @@ public class InteractCommand implements ICommand {
             return;
         }
 
+        if (levelMap.useActiveItem(player)) {
+            return;
+        }
+
         levelMap.openNearbyDoor(player);
     }
 }

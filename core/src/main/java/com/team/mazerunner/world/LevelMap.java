@@ -10,8 +10,10 @@ import com.team.mazerunner.enemies.Enemy;
 import com.team.mazerunner.entities.Player;
 import com.team.mazerunner.items.ItemFactory;
 import com.team.mazerunner.items.Crowbar;
+import com.team.mazerunner.items.Disguise;
 import com.team.mazerunner.items.Key;
 import com.team.mazerunner.items.Knife;
+import com.team.mazerunner.items.Medkit;
 
 import java.util.ArrayList;
 import java.util.ArrayDeque;
@@ -576,6 +578,22 @@ public class LevelMap {
         }
     }
 
+    public boolean useActiveItem(Player player) {
+        if (!player.isActiveItem(Disguise.TYPE)) {
+            return false;
+        }
+
+        if (player.isDisguised()) {
+            statusMessage = "Disguise is already active.";
+            return true;
+        }
+
+        player.activateDisguise();
+        player.consumeItem(Disguise.TYPE);
+        statusMessage = "Disguise active. Enemies cannot spot you for 5 seconds.";
+        return true;
+    }
+
     private void resetEnemiesToPatrol() {
         for (Enemy enemy : enemies) {
             enemy.resetToPatrol();
@@ -711,9 +729,16 @@ public class LevelMap {
 
         for (ItemEntity item : items) {
             if (!item.isPickedUp() && item.getBounds().overlaps(interactionBounds)) {
+                if (Medkit.TYPE.equals(item.getItem().getType()) && player.isFullHealth()) {
+                    statusMessage = "Health is already full.";
+                    return true;
+                }
+
                 item.getItem().onPickup(player);
                 item.markPickedUp();
-                statusMessage = "Picked up: " + item.getItem().getType();
+                statusMessage = Medkit.TYPE.equals(item.getItem().getType())
+                        ? "Used medkit. Health restored."
+                        : "Picked up: " + item.getItem().getType();
                 return true;
             }
         }
@@ -852,6 +877,8 @@ public class LevelMap {
 
         if (levelNumber == 2) {
             addItem(Key.TYPE, 15, 1);
+            addItem(Medkit.TYPE, 5, 9);
+            addItem(Disguise.TYPE, 11, 11);
             addDoor(Key.TYPE, 15, 13);
             addEnemy(7, 5, new int[][]{{7,5}, {8,5}, {9,5}, {8,5}});
             addEnemy(13, 9, new int[][]{{13,9}, {13,10}, {13,11}, {13,10}});
@@ -862,6 +889,8 @@ public class LevelMap {
         if (levelNumber == 3) {
             addItem(Crowbar.TYPE, 15, 1);
             addItem(Knife.TYPE, 1, 13);
+            addItem(Medkit.TYPE, 14, 9);
+            addItem(Disguise.TYPE, 6, 5);
             addDoor(Crowbar.TYPE, 15, 13);
             addEnemy(11, 5, new int[][]{{11,5}, {12,5}, {13,5}, {12,5}});
             addEnemy(11, 9, new int[][]{{11,9}, {12,9}, {13,9}, {12,9}});
@@ -873,6 +902,8 @@ public class LevelMap {
         addItem(Key.TYPE, 3, 1);
         addItem(Crowbar.TYPE, 11, 5);
         addItem(Knife.TYPE, 7, 3);
+        addItem(Medkit.TYPE, 5, 11);
+        addItem(Disguise.TYPE, 10, 9);
         addDoor(Key.TYPE, 12, 7);
         addDoor(Crowbar.TYPE, 11, 1);
         addEnemy(8, 3, new int[][]{{8,3}, {9,3}, {10,3}, {9,3}});
