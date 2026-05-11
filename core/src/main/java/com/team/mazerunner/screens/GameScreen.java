@@ -31,9 +31,12 @@ public class GameScreen implements Screen {
     private PlayerInputHandler inputHandler;
     private boolean levelComplete;
     private boolean paused;
+    private int nextLevelNumber;
     private MenuButton resumeButton;
     private MenuButton restartButton;
     private MenuButton menuButton;
+    private MenuButton continueButton;
+    private MenuButton exitButton;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -50,6 +53,7 @@ public class GameScreen implements Screen {
 
         loadLevel(1);
         createPauseButtons();
+        createLevelCompleteButtons();
     }
 
     public GameScreen(Main game, int levelNumber) {
@@ -67,6 +71,7 @@ public class GameScreen implements Screen {
 
         loadLevel(levelNumber);
         createPauseButtons();
+        createLevelCompleteButtons();
     }
 
     @Override
@@ -78,7 +83,7 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         update(delta);
 
-        Gdx.gl.glClearColor(0.08f, 0.08f, 0.1f, 1);
+        Gdx.gl.glClearColor(0.060f, 0.064f, 0.070f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         camera.update();
@@ -96,10 +101,15 @@ public class GameScreen implements Screen {
         if (paused) {
             renderPauseOverlay();
         }
+
+        if (levelComplete) {
+            renderLevelCompleteOverlay();
+        }
     }
 
     private void update(float delta) {
         if (levelComplete) {
+            handleLevelCompleteButtons();
             return;
         }
 
@@ -121,23 +131,43 @@ public class GameScreen implements Screen {
             return;
         }
 
-        camera.position.set(
-                player.getX(),
-                player.getY(),
-                0
-        );
+        updateCameraPosition();
 
         if (levelMap.isExitReached(player)) {
             if (levelMap.isFinalLevel()) {
                 game.setScreen(new WinScreen(game));
             } else {
-                loadLevel(levelMap.getLevelNumber() + 1);
+                nextLevelNumber = levelMap.getLevelNumber() + 1;
+                levelComplete = true;
             }
         }
     }
 
     private void renderMap() {
-        levelMap.render(shapeRenderer);
+        levelMap.render(shapeRenderer, player);
+    }
+
+    private void updateCameraPosition() {
+        float halfWidth = Main.SCREEN_WIDTH / 2f;
+        float halfHeight = Main.SCREEN_HEIGHT / 2f;
+        float mapWidth = levelMap.getPixelWidth();
+        float mapHeight = levelMap.getPixelHeight();
+        float cameraX = player.getX();
+        float cameraY = player.getY();
+
+        if (mapWidth > Main.SCREEN_WIDTH) {
+            cameraX = Math.max(halfWidth, Math.min(mapWidth - halfWidth, cameraX));
+        } else {
+            cameraX = mapWidth / 2f;
+        }
+
+        if (mapHeight > Main.SCREEN_HEIGHT) {
+            cameraY = Math.max(halfHeight, Math.min(mapHeight - halfHeight, cameraY));
+        } else {
+            cameraY = mapHeight / 2f;
+        }
+
+        camera.position.set(cameraX, cameraY, 0);
     }
 
     private void renderHud() {
@@ -280,8 +310,8 @@ public class GameScreen implements Screen {
     }
 
     private void renderPauseOverlay() {
-        float mouseX = Gdx.input.getX();
-        float mouseY = Main.SCREEN_HEIGHT - Gdx.input.getY();
+        float mouseX = getUiMouseX();
+        float mouseY = getUiMouseY();
 
         shapeRenderer.setProjectionMatrix(hudCamera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -311,8 +341,8 @@ public class GameScreen implements Screen {
             return;
         }
 
-        float mouseX = Gdx.input.getX();
-        float mouseY = Main.SCREEN_HEIGHT - Gdx.input.getY();
+        float mouseX = getUiMouseX();
+        float mouseY = getUiMouseY();
 
         if (resumeButton.contains(mouseX, mouseY)) {
             paused = false;
@@ -324,22 +354,80 @@ public class GameScreen implements Screen {
         }
     }
 
+    private void renderLevelCompleteOverlay() {
+        float mouseX = getUiMouseX();
+        float mouseY = getUiMouseY();
+
+        shapeRenderer.setProjectionMatrix(hudCamera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(new Color(0.018f, 0.022f, 0.026f, 1f));
+        shapeRenderer.rect(0, 0, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
+        drawPixelPanel(Main.SCREEN_WIDTH / 2f - 215, 165, 430, 330, new Color(0.24f, 0.58f, 0.56f, 1f));
+        continueButton.drawShape(shapeRenderer, continueButton.contains(mouseX, mouseY));
+        exitButton.drawShape(shapeRenderer, exitButton.contains(mouseX, mouseY));
+        shapeRenderer.end();
+
+        game.batch.setProjectionMatrix(hudCamera.combined);
+        game.batch.begin();
+        font.setColor(new Color(0.88f, 0.74f, 0.45f, 1f));
+        font.getData().setScale(1.7f);
+        font.draw(game.batch, "LEVEL COMPLETE", Main.SCREEN_WIDTH / 2f - 122, 440);
+        font.getData().setScale(1f);
+        font.setColor(new Color(0.76f, 0.88f, 0.82f, 1f));
+        font.draw(game.batch, "Ready for level " + nextLevelNumber, Main.SCREEN_WIDTH / 2f - 72, 392);
+        continueButton.drawText(game.batch, font);
+        exitButton.drawText(game.batch, font);
+        game.batch.end();
+    }
+
+    private void handleLevelCompleteButtons() {
+        if (!Gdx.input.justTouched()) {
+            return;
+        }
+
+        float mouseX = getUiMouseX();
+        float mouseY = getUiMouseY();
+
+        if (continueButton.contains(mouseX, mouseY)) {
+            loadLevel(nextLevelNumber);
+        } else if (exitButton.contains(mouseX, mouseY)) {
+            game.setScreen(new MainMenuScreen(game));
+        }
+    }
+
     private void loadLevel(int levelNumber) {
         levelMap = new LevelMap(levelNumber);
         player = new Player(levelMap.getSpawnX(), levelMap.getSpawnY());
         inputHandler = new PlayerInputHandler(player, levelMap);
         levelComplete = false;
+        nextLevelNumber = levelNumber + 1;
     }
 
     private void createPauseButtons() {
-        resumeButton = new MenuButton("Resume", Main.SCREEN_WIDTH / 2f - 110, 350, 220, 48);
-        restartButton = new MenuButton("Restart Level", Main.SCREEN_WIDTH / 2f - 110, 290, 220, 48);
-        menuButton = new MenuButton("Main Menu", Main.SCREEN_WIDTH / 2f - 110, 230, 220, 48);
+        resumeButton = new MenuButton("Resume", Main.SCREEN_WIDTH / 2f - 110, 352, 220, 48);
+        restartButton = new MenuButton("Restart Level", Main.SCREEN_WIDTH / 2f - 110, 284, 220, 48);
+        menuButton = new MenuButton("Main Menu", Main.SCREEN_WIDTH / 2f - 110, 216, 220, 48);
+    }
+
+    private void createLevelCompleteButtons() {
+        continueButton = new MenuButton("Continue", Main.SCREEN_WIDTH / 2f - 110, 300, 220, 48);
+        exitButton = new MenuButton("Exit", Main.SCREEN_WIDTH / 2f - 110, 228, 220, 48);
+    }
+
+    private float getUiMouseX() {
+        return Gdx.input.getX() * (Main.SCREEN_WIDTH / (float) Gdx.graphics.getWidth());
+    }
+
+    private float getUiMouseY() {
+        return Main.SCREEN_HEIGHT - Gdx.input.getY() * (Main.SCREEN_HEIGHT / (float) Gdx.graphics.getHeight());
     }
 
     @Override
     public void resize(int width, int height) {
-
+        camera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
+        hudCamera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
+        createPauseButtons();
+        createLevelCompleteButtons();
     }
 
     @Override

@@ -15,7 +15,7 @@ public class WinScreen implements Screen {
     private final OrthographicCamera camera;
     private final ShapeRenderer shapeRenderer;
     private final BitmapFont font;
-    private final MenuButton menuButton;
+    private MenuButton menuButton;
 
     public WinScreen(Main game) {
         this.game = game;
@@ -23,7 +23,7 @@ public class WinScreen implements Screen {
         this.camera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
         this.shapeRenderer = new ShapeRenderer();
         this.font = new BitmapFont();
-        this.menuButton = new MenuButton("Main Menu", Main.SCREEN_WIDTH / 2f - 110, 250, 220, 54);
+        createButtons();
     }
 
     @Override
@@ -33,8 +33,8 @@ public class WinScreen implements Screen {
         Gdx.gl.glClearColor(0.026f, 0.048f, 0.048f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        float mouseX = Gdx.input.getX();
-        float mouseY = Main.SCREEN_HEIGHT - Gdx.input.getY();
+        float mouseX = getUiMouseX();
+        float mouseY = getUiMouseY();
 
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -78,16 +78,31 @@ public class WinScreen implements Screen {
             return;
         }
 
-        float mouseX = Gdx.input.getX();
-        float mouseY = Main.SCREEN_HEIGHT - Gdx.input.getY();
+        float mouseX = getUiMouseX();
+        float mouseY = getUiMouseY();
 
         if (menuButton.contains(mouseX, mouseY)) {
             game.setScreen(new MainMenuScreen(game));
         }
     }
 
+    private void createButtons() {
+        menuButton = new MenuButton("Main Menu", Main.SCREEN_WIDTH / 2f - 110, 250, 220, 54);
+    }
+
+    private float getUiMouseX() {
+        return Gdx.input.getX() * (Main.SCREEN_WIDTH / (float) Gdx.graphics.getWidth());
+    }
+
+    private float getUiMouseY() {
+        return Main.SCREEN_HEIGHT - Gdx.input.getY() * (Main.SCREEN_HEIGHT / (float) Gdx.graphics.getHeight());
+    }
+
     @Override public void show() {}
-    @Override public void resize(int width, int height) {}
+    @Override public void resize(int width, int height) {
+        camera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
+        createButtons();
+    }
     @Override public void pause() {}
     @Override public void resume() {}
     @Override public void hide() {}

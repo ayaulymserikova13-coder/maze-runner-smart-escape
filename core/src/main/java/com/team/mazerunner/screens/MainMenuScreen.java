@@ -15,8 +15,8 @@ public class MainMenuScreen implements Screen {
     private final OrthographicCamera camera;
     private final ShapeRenderer shapeRenderer;
     private final BitmapFont font;
-    private final MenuButton playButton;
-    private final MenuButton quitButton;
+    private MenuButton playButton;
+    private MenuButton quitButton;
 
     public MainMenuScreen(Main game) {
         this.game = game;
@@ -24,8 +24,7 @@ public class MainMenuScreen implements Screen {
         this.camera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
         this.shapeRenderer = new ShapeRenderer();
         this.font = new BitmapFont();
-        this.playButton = new MenuButton("Play", Main.SCREEN_WIDTH / 2f - 110, 315, 220, 54);
-        this.quitButton = new MenuButton("Quit", Main.SCREEN_WIDTH / 2f - 110, 245, 220, 54);
+        createButtons();
     }
 
     @Override
@@ -40,8 +39,8 @@ public class MainMenuScreen implements Screen {
         Gdx.gl.glClearColor(0.035f, 0.040f, 0.050f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        float mouseX = Gdx.input.getX();
-        float mouseY = Main.SCREEN_HEIGHT - Gdx.input.getY();
+        float mouseX = getUiMouseX();
+        float mouseY = getUiMouseY();
 
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -150,8 +149,8 @@ public class MainMenuScreen implements Screen {
             return;
         }
 
-        float mouseX = Gdx.input.getX();
-        float mouseY = Main.SCREEN_HEIGHT - Gdx.input.getY();
+        float mouseX = getUiMouseX();
+        float mouseY = getUiMouseY();
 
         if (playButton.contains(mouseX, mouseY)) {
             game.setScreen(new GameScreen(game));
@@ -161,9 +160,23 @@ public class MainMenuScreen implements Screen {
 
     }
 
+    private void createButtons() {
+        this.playButton = new MenuButton("Play", Main.SCREEN_WIDTH / 2f - 110, 315, 220, 54);
+        this.quitButton = new MenuButton("Quit", Main.SCREEN_WIDTH / 2f - 110, 245, 220, 54);
+    }
+
+    private float getUiMouseX() {
+        return Gdx.input.getX() * (Main.SCREEN_WIDTH / (float) Gdx.graphics.getWidth());
+    }
+
+    private float getUiMouseY() {
+        return Main.SCREEN_HEIGHT - Gdx.input.getY() * (Main.SCREEN_HEIGHT / (float) Gdx.graphics.getHeight());
+    }
+
     @Override
     public void resize(int width, int height) {
-
+        camera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
+        createButtons();
     }
 
     @Override
