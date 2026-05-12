@@ -17,18 +17,17 @@ public class Enemy {
     private static final float BACK_BLIND_ANGLE = 38f;
     private static final float CLOSE_DETECTION_RANGE = LevelMap.TILE_SIZE * 1.25f;
     private static final float CLOSE_DETECTION_ANGLE = 120f;
-    private static final float ALERT_TRACK_RANGE = LevelMap.TILE_SIZE * 6f;
-    private static final float ALERT_TRACK_ANGLE = 145f;
-    private static final float SEARCH_DURATION = 5f;
-    private static final float SEARCH_ADVANCE_DURATION = 2.4f;
-    private static final float SEARCH_ADVANCE_SPEED_SCALE = 0.85f;
-    private static final float SEARCH_PATH_DISTANCE = LevelMap.TILE_SIZE * 2.5f;
-    private static final float SEARCH_SIDE_PATH_DISTANCE = LevelMap.TILE_SIZE * 1.6f;
+    private static final float ALERT_TRACK_RANGE = LevelMap.TILE_SIZE * 7.5f;
+    private static final float ALERT_TRACK_ANGLE = 168f;
+    private static final float SEARCH_DURATION = 6f;
+    private static final float SEARCH_ADVANCE_DURATION = 3.2f;
+    private static final float SEARCH_ADVANCE_SPEED_SCALE = 1.10f;
+    private static final float SEARCH_PATH_DISTANCE = LevelMap.TILE_SIZE * 3.6f;
+    private static final float SEARCH_SIDE_PATH_DISTANCE = LevelMap.TILE_SIZE * 2.2f;
     private static final float SEARCH_TARGET_REACHED_DISTANCE = 8f;
     private static final float SEARCH_SWEEP_SPEED = 210f;
-    private static final float CHASE_EXTRA_DISTANCE = LevelMap.TILE_SIZE * 3f;
     private static final float CHASE_REACHED_DISTANCE = 8f;
-    private static final float CHASE_STUCK_TIME = 1.8f;
+    private static final float CHASE_STUCK_TIME = 2.8f;
     private static final float CHASE_STUCK_DISTANCE = 1.25f;
     private static final float STEALTH_REACTION_TIME = 6f;
     private static final float STEALTH_KILL_RANGE = LevelMap.TILE_SIZE * 1.15f;
@@ -95,7 +94,7 @@ public class Enemy {
         this.bounds = new Rectangle(x, y, 32, 32);
         this.random = new Random(Float.floatToIntBits(x * 31f + y * 17f));
         this.patrolSpeed = 78f + random.nextFloat() * 28f;
-        this.chaseSpeed = 140f + random.nextFloat() * 18f;
+        this.chaseSpeed = 178f + random.nextFloat() * 24f;
 
         if (patrolPath.size() > 1) {
             this.patrolIndex = random.nextInt(patrolPath.size());
@@ -159,19 +158,9 @@ public class Enemy {
         Color midColor;
         Color innerColor;
 
-        if (state == EnemyState.CHASE || state == EnemyState.ALERT) {
-            outerColor = new Color(0.40f, 0.08f, 0.07f, 0.035f);
-            midColor = new Color(0.48f, 0.12f, 0.09f, 0.055f);
-            innerColor = new Color(0.58f, 0.18f, 0.12f, 0.075f);
-        } else if (state == EnemyState.SEARCH || state == EnemyState.RETURN) {
-            outerColor = new Color(0.23f, 0.20f, 0.13f, 0.030f);
-            midColor = new Color(0.32f, 0.27f, 0.16f, 0.045f);
-            innerColor = new Color(0.42f, 0.34f, 0.18f, 0.060f);
-        } else {
-            outerColor = new Color(0.14f, 0.20f, 0.18f, 0.030f);
-            midColor = new Color(0.22f, 0.30f, 0.24f, 0.045f);
-            innerColor = new Color(0.34f, 0.42f, 0.30f, 0.062f);
-        }
+        outerColor = new Color(0.12f, 0.10f, 0.06f, 0.070f);
+        midColor = new Color(0.22f, 0.18f, 0.10f, 0.105f);
+        innerColor = new Color(0.30f, 0.26f, 0.16f, 0.145f);
 
         shapeRenderer.setColor(outerColor);
         renderFlashlightFan(shapeRenderer, levelMap, FLASHLIGHT_RANGE, FLASHLIGHT_ANGLE);
@@ -203,10 +192,10 @@ public class Enemy {
         float glowX = getCenterX() + visualDirection.x * 12f;
         float glowY = getCenterY() + visualDirection.y * 12f;
 
-        shapeRenderer.setColor(new Color(color.r, color.g, color.b, color.a * 0.65f));
-        shapeRenderer.circle(glowX, glowY, 9f);
-        shapeRenderer.setColor(new Color(color.r, color.g, color.b, color.a * 0.35f));
-        shapeRenderer.circle(glowX, glowY, 16f);
+        shapeRenderer.setColor(new Color(color.r, color.g, color.b, 0.08f));
+        shapeRenderer.circle(glowX, glowY, 7f);
+        shapeRenderer.setColor(new Color(color.r, color.g, color.b, 0.04f));
+        shapeRenderer.circle(glowX, glowY, 12f);
     }
 
     private Vector2 getFlashlightRayEnd(LevelMap levelMap, float angleOffset, float range) {
@@ -219,7 +208,10 @@ public class Enemy {
         }
 
         ray.nor().rotateDeg(angleOffset);
-        Vector2 lastVisiblePoint = new Vector2(originX, originY);
+        Vector2 lastVisiblePoint = new Vector2(
+                originX + ray.x * LevelMap.TILE_SIZE * 0.35f,
+                originY + ray.y * LevelMap.TILE_SIZE * 0.35f
+        );
 
         for (float distance = LevelMap.TILE_SIZE / 4f; distance <= range; distance += LevelMap.TILE_SIZE / 4f) {
             float checkX = originX + ray.x * distance;
@@ -814,6 +806,10 @@ public class Enemy {
         return lastKnownPlayerY;
     }
 
+    public boolean isTargetVisible() {
+        return targetVisible;
+    }
+
     private void updateState(Player player, LevelMap levelMap, float delta) {
         vulnerableToStealthKill = false;
         targetVisible = false;
@@ -871,30 +867,9 @@ public class Enemy {
     private void updateLastKnownPlayerPosition(Player player, LevelMap levelMap) {
         float playerX = player.getX();
         float playerY = player.getY();
-        Vector2 escapeDirection;
-
-        if (hasPreviousSeenPlayer) {
-            escapeDirection = new Vector2(playerX - previousSeenPlayerX, playerY - previousSeenPlayerY);
-        } else {
-            escapeDirection = new Vector2(playerX - x, playerY - y);
-        }
 
         lastKnownPlayerX = levelMap.getTileCenterX(playerX + player.getWidth() / 2f);
         lastKnownPlayerY = levelMap.getTileCenterY(playerY + player.getHeight() / 2f);
-
-        if (!escapeDirection.isZero(1f)) {
-            escapeDirection.nor();
-            float extendedX = playerX + escapeDirection.x * CHASE_EXTRA_DISTANCE;
-            float extendedY = playerY + escapeDirection.y * CHASE_EXTRA_DISTANCE;
-            float safeExtendedX = levelMap.getTileCenterX(extendedX + bounds.width / 2f);
-            float safeExtendedY = levelMap.getTileCenterY(extendedY + bounds.height / 2f);
-
-            if (!levelMap.isBlocked(safeExtendedX, safeExtendedY, (int) bounds.width, (int) bounds.height) &&
-                    levelMap.canReach(x, y, safeExtendedX, safeExtendedY)) {
-                lastKnownPlayerX = safeExtendedX;
-                lastKnownPlayerY = safeExtendedY;
-            }
-        }
 
         previousSeenPlayerX = playerX;
         previousSeenPlayerY = playerY;
