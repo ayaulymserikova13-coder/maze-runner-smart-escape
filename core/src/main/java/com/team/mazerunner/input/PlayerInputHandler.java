@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.Vector2;
 import com.team.mazerunner.entities.Player;
 import com.team.mazerunner.items.Crowbar;
+import com.team.mazerunner.items.Disguise;
 import com.team.mazerunner.items.Key;
 import com.team.mazerunner.items.Knife;
 import com.team.mazerunner.world.LevelMap;
@@ -68,6 +69,19 @@ public class PlayerInputHandler {
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) {
             levelMap.selectPlayerItem(player, Knife.TYPE);
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_4)) {
+            levelMap.selectPlayerItem(player, Disguise.TYPE);
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F4)) {
+            if (player.hasItem(Disguise.TYPE)) {
+                player.selectItem(Disguise.TYPE);
+                levelMap.useActiveItem(player);
+            } else {
+                levelMap.selectPlayerItem(player, Disguise.TYPE);
+            }
         }
     }
 }

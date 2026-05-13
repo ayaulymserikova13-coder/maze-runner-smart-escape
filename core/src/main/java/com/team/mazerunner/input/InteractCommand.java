@@ -15,6 +15,10 @@ public class InteractCommand implements ICommand {
 
     @Override
     public void execute() {
+        if (levelMap.useActiveItem(player)) {
+            return;
+        }
+
         if (levelMap.pickUpNearbyItem(player)) {
             return;
         }
