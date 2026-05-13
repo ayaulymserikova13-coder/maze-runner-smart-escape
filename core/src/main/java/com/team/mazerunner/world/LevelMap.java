@@ -1,6 +1,8 @@
 package com.team.mazerunner.world;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -8,8 +10,10 @@ import com.team.mazerunner.enemies.Enemy;
 import com.team.mazerunner.entities.Player;
 import com.team.mazerunner.items.ItemFactory;
 import com.team.mazerunner.items.Crowbar;
+import com.team.mazerunner.items.Disguise;
 import com.team.mazerunner.items.Key;
 import com.team.mazerunner.items.Knife;
+import com.team.mazerunner.items.Medkit;
 
 import java.util.ArrayList;
 import java.util.ArrayDeque;
@@ -32,54 +36,54 @@ public class LevelMap {
 
     private static final int[][] LEVEL_1 = {
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-            {1,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,1},
-            {1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1,1},
-            {1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,1},
-            {1,1,1,0,1,0,1,1,1,1,1,1,1,1,1,0,1,1},
-            {1,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0,1,1},
-            {1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,1},
+            {1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,1},
+            {1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1},
+            {1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,1},
+            {1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,1},
+            {1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,1},
+            {1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1},
+            {1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,1,1},
+            {1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,1},
             {1,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,1},
-            {1,0,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1},
-            {1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1},
-            {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1},
-            {1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1},
+            {1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,1,1},
+            {1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1},
+            {1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1},
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
     };
 
     private static final int[][] LEVEL_2 = {
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-            {1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,1,0,0,1,0,1,0,1,1,1,0,1,0,1,1,1,1},
-            {1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,1},
-            {1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,0,1,1},
-            {1,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1,1},
-            {1,0,0,1,1,0,1,0,1,1,0,1,0,0,1,0,1,1},
-            {1,0,1,0,0,0,1,0,0,0,0,0,1,0,1,0,1,1},
-            {1,0,1,0,1,1,1,0,1,1,1,0,0,0,1,0,1,1},
-            {1,0,0,0,1,0,1,0,1,0,0,0,1,0,1,0,1,1},
-            {1,1,0,1,1,0,1,0,1,0,1,1,1,0,1,0,1,1},
-            {1,0,0,0,0,0,1,0,1,0,0,0,1,0,0,0,1,1},
-            {1,0,1,1,1,1,1,0,1,1,0,0,1,1,1,0,1,1},
-            {1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1},
+            {1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,1},
+            {1,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,1},
+            {1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1,1},
+            {1,0,0,0,1,0,1,0,0,0,1,0,0,0,1,0,1,1},
+            {1,1,1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,1},
+            {1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1},
+            {1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,1},
+            {1,0,1,0,0,0,0,0,1,0,0,0,1,0,1,0,1,1},
+            {1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,1},
+            {1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,1,1},
+            {1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1},
+            {1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1},
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
     };
 
     private static final int[][] LEVEL_3 = {
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-            {1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1},
-            {1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1,1},
-            {1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,1},
-            {1,0,1,0,1,1,1,1,0,0,1,1,1,1,1,1,1,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1},
-            {1,0,0,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1},
-            {1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,1,1},
-            {1,1,1,0,0,1,1,0,1,0,1,0,1,1,1,0,1,1},
-            {1,0,1,0,1,0,0,0,1,0,1,0,0,0,0,0,1,1},
-            {1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1},
-            {1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1},
-            {1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,0,1,1},
+            {1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,1},
+            {1,0,1,1,0,1,0,1,1,0,1,0,1,0,1,0,1,1},
+            {1,0,0,1,0,0,0,0,1,0,1,0,0,0,1,0,1,1},
+            {1,1,0,1,1,1,1,0,1,0,1,1,1,0,1,0,1,1},
+            {1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,1},
+            {1,0,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,1},
+            {1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,1},
+            {1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1},
+            {1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,1},
+            {1,1,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,1},
+            {1,0,0,0,0,0,0,0,1,0,1,0,0,0,1,0,1,1},
+            {1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,0,1,1},
             {1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1},
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
     };
@@ -118,7 +122,7 @@ public class LevelMap {
         createLevelObjects(levelNumber);
     }
 
-    public void render(ShapeRenderer shapeRenderer) {
+    public void render(ShapeRenderer shapeRenderer, Player player) {
         for (int row = 0; row < map.length; row++) {
             for (int col = 0; col < map[row].length; col++) {
                 if (map[row][col] == WALL) {
@@ -156,22 +160,35 @@ public class LevelMap {
         for (Enemy enemy : enemies) {
             enemy.render(shapeRenderer);
         }
+
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        for (Enemy enemy : enemies) {
+            enemy.renderFlashlight(shapeRenderer, this);
+        }
+
+        for (Enemy enemy : enemies) {
+            enemy.render(shapeRenderer);
+        }
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
     private Color getWallColor() {
         if (levelNumber == 1) {
-            return new Color(0.19f, 0.24f, 0.25f, 1f);
+            return new Color(0.205f, 0.225f, 0.230f, 1f);
         }
 
         if (levelNumber == 2) {
-            return new Color(0.22f, 0.18f, 0.27f, 1f);
+            return new Color(0.198f, 0.174f, 0.235f, 1f);
         }
 
         if (levelNumber == 3) {
-            return new Color(0.31f, 0.24f, 0.16f, 1f);
+            return new Color(0.218f, 0.166f, 0.110f, 1f);
         }
 
-        return new Color(0.16f, 0.13f, 0.21f, 1f);
+        return new Color(0.176f, 0.152f, 0.220f, 1f);
     }
 
     private void renderExitPortal(ShapeRenderer shapeRenderer) {
@@ -221,18 +238,18 @@ public class LevelMap {
         float checker = ((row + col) % 2 == 0) ? 0.010f : 0f;
 
         if (levelNumber == 1) {
-            return new Color(0.045f + checker, 0.060f + checker, 0.064f + checker, 1f);
+            return new Color(0.105f + checker, 0.120f + checker, 0.126f + checker, 1f);
         }
 
         if (levelNumber == 2) {
-            return new Color(0.050f + checker, 0.043f + checker, 0.070f + checker, 1f);
+            return new Color(0.105f + checker, 0.092f + checker, 0.136f + checker, 1f);
         }
 
         if (levelNumber == 3) {
-            return new Color(0.086f + checker, 0.062f + checker, 0.040f + checker, 1f);
+            return new Color(0.122f + checker, 0.090f + checker, 0.060f + checker, 1f);
         }
 
-        return new Color(0.035f + checker, 0.032f + checker, 0.055f + checker, 1f);
+        return new Color(0.095f + checker, 0.086f + checker, 0.130f + checker, 1f);
     }
 
     private void renderWallDetail(ShapeRenderer shapeRenderer, int col, int row) {
@@ -565,6 +582,22 @@ public class LevelMap {
         }
     }
 
+    public boolean useActiveItem(Player player) {
+        if (!player.isActiveItem(Disguise.TYPE)) {
+            return false;
+        }
+
+        if (player.isDisguised()) {
+            statusMessage = "Disguise is already active.";
+            return true;
+        }
+
+        player.activateDisguise();
+        player.consumeItem(Disguise.TYPE);
+        statusMessage = "Disguise active. Enemies cannot spot you for 5 seconds.";
+        return true;
+    }
+
     private void resetEnemiesToPatrol() {
         for (Enemy enemy : enemies) {
             enemy.resetToPatrol();
@@ -700,9 +733,16 @@ public class LevelMap {
 
         for (ItemEntity item : items) {
             if (!item.isPickedUp() && item.getBounds().overlaps(interactionBounds)) {
+                if (Medkit.TYPE.equals(item.getItem().getType()) && player.isFullHealth()) {
+                    statusMessage = "Health is already full.";
+                    return true;
+                }
+
                 item.getItem().onPickup(player);
                 item.markPickedUp();
-                statusMessage = "Picked up: " + item.getItem().getType();
+                statusMessage = Medkit.TYPE.equals(item.getItem().getType())
+                        ? "Used medkit. Health restored."
+                        : "Picked up: " + item.getItem().getType();
                 return true;
             }
         }
@@ -795,6 +835,14 @@ public class LevelMap {
         return levelNumber;
     }
 
+    public float getPixelWidth() {
+        return map[0].length * TILE_SIZE;
+    }
+
+    public float getPixelHeight() {
+        return map.length * TILE_SIZE;
+    }
+
     public float getSpawnX() {
         return spawnX;
     }
@@ -841,9 +889,12 @@ public class LevelMap {
 
         if (levelNumber == 2) {
             addItem(Key.TYPE, 15, 1);
+            addItem(Medkit.TYPE, 5, 9);
+            addItem(Disguise.TYPE, 11, 11);
             addDoor(Key.TYPE, 15, 13);
             addEnemy(7, 5, new int[][]{{7,5}, {8,5}, {9,5}, {8,5}});
             addEnemy(13, 9, new int[][]{{13,9}, {13,10}, {13,11}, {13,10}});
+            addEnemy(3, 11, new int[][]{{3,11}, {3,10}, {3,9}, {3,10}});
             statusMessage = "Level 2: longer maze, same key-door logic.";
             return;
         }
@@ -851,24 +902,30 @@ public class LevelMap {
         if (levelNumber == 3) {
             addItem(Crowbar.TYPE, 15, 1);
             addItem(Knife.TYPE, 1, 13);
+            addItem(Medkit.TYPE, 14, 9);
+            addItem(Disguise.TYPE, 6, 5);
             addDoor(Crowbar.TYPE, 15, 13);
             addEnemy(11, 5, new int[][]{{11,5}, {12,5}, {13,5}, {12,5}});
             addEnemy(11, 9, new int[][]{{11,9}, {12,9}, {13,9}, {12,9}});
             addEnemy(3, 11, new int[][]{{3,11}, {4,11}, {5,11}, {4,11}});
+            addEnemy(15, 5, new int[][]{{15,5}, {15,6}, {15,7}, {15,6}});
             statusMessage = "Level 3: find the crowbar for the iron door.";
             return;
         }
 
-        addItem(Key.TYPE, 3, 1);
-        addItem(Crowbar.TYPE, 11, 5);
+        addItem(Crowbar.TYPE, 5, 7);
+        addItem(Key.TYPE, 12, 3);
         addItem(Knife.TYPE, 7, 3);
-        addDoor(Key.TYPE, 12, 7);
-        addDoor(Crowbar.TYPE, 11, 1);
+        addItem(Medkit.TYPE, 5, 11);
+        addItem(Disguise.TYPE, 10, 9);
+        addDoor(Crowbar.TYPE, 12, 5);
+        addDoor(Key.TYPE, 11, 1);
         addEnemy(8, 3, new int[][]{{8,3}, {9,3}, {10,3}, {9,3}});
         addEnemy(9, 7, new int[][]{{9,7}, {8,7}, {7,7}, {8,7}});
         addEnemy(3, 9, new int[][]{{3,9}, {2,9}, {1,9}, {2,9}});
         addEnemy(7, 11, new int[][]{{7,11}, {8,11}, {9,11}, {8,11}});
-        statusMessage = "Level 4: use both items to reach the final exit.";
+        addEnemy(11, 11, new int[][]{{11,11}, {12,11}, {12,10}, {12,9}, {12,10}, {12,11}});
+        statusMessage = "Level 4: open the iron door first, take the key, then unlock the exit door.";
     }
 
     private void addItem(String itemType, int tileX, int tileY) {
