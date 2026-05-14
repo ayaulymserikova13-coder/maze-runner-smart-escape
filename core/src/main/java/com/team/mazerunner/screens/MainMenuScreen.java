@@ -45,7 +45,7 @@ public class MainMenuScreen implements Screen {
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         renderMenuBackground();
-        drawPixelPanel(Main.SCREEN_WIDTH / 2f - 210, 190, 420, 320);
+        drawPixelPanel(Main.SCREEN_WIDTH / 2f - 230, 172, 460, 365);
         drawSideMazeRelic(122, 230);
         drawSideMazeRelic(Main.SCREEN_WIDTH - 186, 230);
         drawTitleOrnament();
@@ -55,35 +55,42 @@ public class MainMenuScreen implements Screen {
 
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
-        font.setColor(new Color(0.92f, 0.98f, 0.95f, 1f));
+        font.setColor(new Color(0.58f, 1.00f, 0.94f, 1f));
         font.getData().setScale(2f);
-        font.draw(game.batch, "MAZE RUNNER", Main.SCREEN_WIDTH / 2f - 135, 430);
+        font.draw(game.batch, "MAZE RUNNER", Main.SCREEN_WIDTH / 2f - 135, 421);
         font.getData().setScale(1f);
-        font.setColor(new Color(0.58f, 0.76f, 0.74f, 1f));
-        font.draw(game.batch, "2D stealth maze escape", Main.SCREEN_WIDTH / 2f - 82, 390);
+        font.setColor(new Color(0.54f, 0.94f, 0.88f, 1f));
+        font.draw(game.batch, "2D STEALTH MAZE ESCAPE", Main.SCREEN_WIDTH / 2f - 94, 380);
         playButton.drawText(game.batch, font);
         quitButton.drawText(game.batch, font);
         game.batch.end();
     }
 
     private void drawPixelPanel(float x, float y, float width, float height) {
-        shapeRenderer.setColor(new Color(0.010f, 0.009f, 0.008f, 1f));
-        shapeRenderer.rect(x + 8, y - 8, width, height);
-        shapeRenderer.setColor(new Color(0.68f, 0.46f, 0.24f, 1f));
-        shapeRenderer.rect(x, y, width, 6);
-        shapeRenderer.rect(x, y + height - 6, width, 6);
-        shapeRenderer.rect(x, y, 6, height);
-        shapeRenderer.rect(x + width - 6, y, 6, height);
-        shapeRenderer.setColor(new Color(0.018f, 0.023f, 0.026f, 1f));
-        shapeRenderer.rect(x + 6, y + 6, width - 12, height - 12);
-        shapeRenderer.setColor(new Color(0.25f, 0.58f, 0.56f, 1f));
+        shapeRenderer.setColor(new Color(0.003f, 0.006f, 0.008f, 1f));
+        shapeRenderer.rect(x + 10, y - 10, width, height);
+        shapeRenderer.setColor(new Color(0.04f, 0.98f, 0.92f, 1f));
+        shapeRenderer.rect(x, y, width, 5);
+        shapeRenderer.rect(x, y + height - 5, width, 5);
+        shapeRenderer.rect(x, y, 5, height);
+        shapeRenderer.rect(x + width - 5, y, 5, height);
+        shapeRenderer.setColor(new Color(0.010f, 0.030f, 0.034f, 1f));
+        shapeRenderer.rect(x + 5, y + 5, width - 10, height - 10);
+        shapeRenderer.setColor(new Color(0.020f, 0.090f, 0.095f, 1f));
+        for (float gx = x + 30; gx < x + width - 30; gx += 32) {
+            shapeRenderer.rect(gx, y + 34, 1, height - 68);
+        }
+        for (float gy = y + 34; gy < y + height - 30; gy += 32) {
+            shapeRenderer.rect(x + 28, gy, width - 56, 1);
+        }
+        shapeRenderer.setColor(new Color(0.38f, 0.96f, 0.88f, 1f));
         shapeRenderer.rect(x + 10, y + 10, 8, 8);
         shapeRenderer.rect(x + width - 18, y + 10, 8, 8);
         shapeRenderer.rect(x + 10, y + height - 18, 8, 8);
         shapeRenderer.rect(x + width - 18, y + height - 18, 8, 8);
-        shapeRenderer.setColor(new Color(0.09f, 0.19f, 0.20f, 1f));
-        shapeRenderer.rect(x + 22, y + height - 22, width - 44, 2);
-        shapeRenderer.rect(x + 22, y + 20, width - 44, 2);
+        shapeRenderer.setColor(new Color(0.08f, 0.58f, 0.54f, 1f));
+        shapeRenderer.rect(x + 24, y + height - 25, width - 48, 2);
+        shapeRenderer.rect(x + 24, y + 28, width - 48, 2);
     }
 
     private void drawSideMazeRelic(float x, float y) {
@@ -113,16 +120,18 @@ public class MainMenuScreen implements Screen {
 
     private void drawTitleOrnament() {
         float centerX = Main.SCREEN_WIDTH / 2f;
-        shapeRenderer.setColor(new Color(0.68f, 0.46f, 0.24f, 1f));
-        shapeRenderer.rect(centerX - 260, 504, 150, 4);
-        shapeRenderer.rect(centerX + 110, 504, 150, 4);
-        shapeRenderer.setColor(new Color(0.24f, 0.58f, 0.56f, 1f));
-        shapeRenderer.rect(centerX - 96, 500, 192, 4);
-        shapeRenderer.rect(centerX - 6, 478, 12, 22);
-        shapeRenderer.setColor(new Color(0.05f, 0.18f, 0.19f, 1f));
-        shapeRenderer.rect(centerX - 22, 462, 44, 18);
-        shapeRenderer.setColor(new Color(0.44f, 0.80f, 0.74f, 1f));
-        shapeRenderer.rect(centerX - 11, 467, 22, 8);
+        shapeRenderer.setColor(new Color(0.05f, 0.86f, 0.82f, 1f));
+        shapeRenderer.rect(centerX - 250, 532, 132, 3);
+        shapeRenderer.rect(centerX + 118, 532, 132, 3);
+        shapeRenderer.rect(centerX - 115, 508, 230, 3);
+        shapeRenderer.rect(centerX - 5, 484, 10, 24);
+        shapeRenderer.setColor(new Color(0.04f, 0.22f, 0.24f, 1f));
+        shapeRenderer.rect(centerX - 28, 462, 56, 28);
+        shapeRenderer.setColor(new Color(0.45f, 1.00f, 0.90f, 1f));
+        shapeRenderer.rect(centerX - 17, 470, 34, 12);
+        shapeRenderer.setColor(new Color(0.010f, 0.050f, 0.055f, 1f));
+        shapeRenderer.rect(centerX - 10, 472, 6, 6);
+        shapeRenderer.rect(centerX + 4, 472, 6, 6);
     }
 
     private void renderMenuBackground() {
@@ -161,8 +170,8 @@ public class MainMenuScreen implements Screen {
     }
 
     private void createButtons() {
-        this.playButton = new MenuButton("Play", Main.SCREEN_WIDTH / 2f - 110, 315, 220, 54);
-        this.quitButton = new MenuButton("Quit", Main.SCREEN_WIDTH / 2f - 110, 245, 220, 54);
+        this.playButton = new MenuButton("Play", Main.SCREEN_WIDTH / 2f - 155, 306, 310, 54);
+        this.quitButton = new MenuButton("Quit", Main.SCREEN_WIDTH / 2f - 155, 236, 310, 54);
     }
 
     private float getUiMouseX() {

@@ -91,6 +91,7 @@ public class GameScreen implements Screen {
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
+        renderLevelBackground();
         renderMap();
         player.render(shapeRenderer);
 
@@ -145,6 +146,132 @@ public class GameScreen implements Screen {
 
     private void renderMap() {
         levelMap.render(shapeRenderer, player);
+    }
+
+    private void renderLevelBackground() {
+        float left = camera.position.x - Main.SCREEN_WIDTH / 2f;
+        float bottom = camera.position.y - Main.SCREEN_HEIGHT / 2f;
+        float width = Main.SCREEN_WIDTH;
+        float height = Main.SCREEN_HEIGHT;
+        int level = levelMap.getLevelNumber();
+
+        if (level == 1) {
+            drawIndustrialBase(left, bottom, width, height,
+                    new Color(0.025f, 0.036f, 0.038f, 1f),
+                    new Color(0.055f, 0.082f, 0.080f, 1f),
+                    new Color(0.10f, 0.30f, 0.25f, 1f));
+            drawFacilityVents(left, bottom, width, height);
+        } else if (level == 2) {
+            drawIndustrialBase(left, bottom, width, height,
+                    new Color(0.022f, 0.028f, 0.035f, 1f),
+                    new Color(0.050f, 0.065f, 0.080f, 1f),
+                    new Color(0.22f, 0.06f, 0.07f, 1f));
+            drawSecurityPanels(left, bottom, width, height);
+        } else if (level == 3) {
+            drawIndustrialBase(left, bottom, width, height,
+                    new Color(0.042f, 0.032f, 0.024f, 1f),
+                    new Color(0.084f, 0.058f, 0.034f, 1f),
+                    new Color(0.30f, 0.18f, 0.07f, 1f));
+            drawWarehouseSilhouettes(left, bottom, width, height);
+        } else {
+            drawIndustrialBase(left, bottom, width, height,
+                    new Color(0.025f, 0.026f, 0.038f, 1f),
+                    new Color(0.055f, 0.060f, 0.088f, 1f),
+                    new Color(0.08f, 0.26f, 0.32f, 1f));
+            drawLaboratoryBackwall(left, bottom, width, height);
+        }
+    }
+
+    private void drawIndustrialBase(float left, float bottom, float width, float height,
+                                    Color baseColor, Color panelColor, Color accentColor) {
+        shapeRenderer.setColor(baseColor);
+        shapeRenderer.rect(left, bottom, width, height);
+
+        float startX = (float) Math.floor(left / 160f) * 160f;
+        float startY = (float) Math.floor(bottom / 112f) * 112f;
+
+        for (float y = startY; y < bottom + height + 112f; y += 112f) {
+            shapeRenderer.setColor(new Color(panelColor.r, panelColor.g, panelColor.b, 0.72f));
+            shapeRenderer.rect(left, y + 34, width, 12);
+            shapeRenderer.setColor(new Color(0.010f, 0.012f, 0.014f, 1f));
+            shapeRenderer.rect(left, y + 46, width, 4);
+        }
+
+        for (float x = startX; x < left + width + 160f; x += 160f) {
+            shapeRenderer.setColor(new Color(panelColor.r * 0.7f, panelColor.g * 0.7f, panelColor.b * 0.7f, 1f));
+            shapeRenderer.rect(x, bottom, 5, height);
+            shapeRenderer.setColor(new Color(accentColor.r, accentColor.g, accentColor.b, 0.82f));
+            shapeRenderer.rect(x + 18, bottom + 30, 30, 4);
+            shapeRenderer.rect(x + 18, bottom + height - 52, 30, 4);
+        }
+    }
+
+    private void drawFacilityVents(float left, float bottom, float width, float height) {
+        float startX = (float) Math.floor(left / 220f) * 220f;
+        float startY = (float) Math.floor(bottom / 150f) * 150f;
+
+        for (float x = startX; x < left + width + 220f; x += 220f) {
+            for (float y = startY; y < bottom + height + 150f; y += 150f) {
+                shapeRenderer.setColor(new Color(0.030f, 0.054f, 0.052f, 1f));
+                shapeRenderer.rect(x + 48, y + 44, 58, 34);
+                shapeRenderer.setColor(new Color(0.13f, 0.28f, 0.24f, 1f));
+                shapeRenderer.rect(x + 55, y + 52, 44, 4);
+                shapeRenderer.rect(x + 55, y + 62, 44, 4);
+                shapeRenderer.rect(x + 55, y + 72, 44, 4);
+            }
+        }
+    }
+
+    private void drawSecurityPanels(float left, float bottom, float width, float height) {
+        float startX = (float) Math.floor(left / 260f) * 260f;
+        float startY = (float) Math.floor(bottom / 170f) * 170f;
+
+        for (float x = startX; x < left + width + 260f; x += 260f) {
+            for (float y = startY; y < bottom + height + 170f; y += 170f) {
+                shapeRenderer.setColor(new Color(0.030f, 0.040f, 0.052f, 1f));
+                shapeRenderer.rect(x + 66, y + 54, 80, 44);
+                shapeRenderer.setColor(new Color(0.10f, 0.16f, 0.18f, 1f));
+                shapeRenderer.rect(x + 74, y + 62, 42, 5);
+                shapeRenderer.rect(x + 74, y + 74, 56, 5);
+                shapeRenderer.setColor(new Color(0.42f, 0.08f, 0.08f, 1f));
+                shapeRenderer.rect(x + 132, y + 84, 7, 7);
+            }
+        }
+    }
+
+    private void drawWarehouseSilhouettes(float left, float bottom, float width, float height) {
+        float startX = (float) Math.floor(left / 240f) * 240f;
+        float startY = (float) Math.floor(bottom / 160f) * 160f;
+
+        for (float x = startX; x < left + width + 240f; x += 240f) {
+            for (float y = startY; y < bottom + height + 160f; y += 160f) {
+                shapeRenderer.setColor(new Color(0.070f, 0.046f, 0.026f, 1f));
+                shapeRenderer.rect(x + 42, y + 36, 44, 42);
+                shapeRenderer.rect(x + 91, y + 36, 44, 58);
+                shapeRenderer.setColor(new Color(0.16f, 0.09f, 0.035f, 1f));
+                shapeRenderer.rect(x + 48, y + 55, 32, 4);
+                shapeRenderer.rect(x + 97, y + 62, 32, 4);
+                shapeRenderer.setColor(new Color(0.34f, 0.18f, 0.06f, 1f));
+                shapeRenderer.rect(x + 54, y + 42, 7, 7);
+            }
+        }
+    }
+
+    private void drawLaboratoryBackwall(float left, float bottom, float width, float height) {
+        float startX = (float) Math.floor(left / 250f) * 250f;
+        float startY = (float) Math.floor(bottom / 155f) * 155f;
+
+        for (float x = startX; x < left + width + 250f; x += 250f) {
+            for (float y = startY; y < bottom + height + 155f; y += 155f) {
+                shapeRenderer.setColor(new Color(0.032f, 0.042f, 0.060f, 1f));
+                shapeRenderer.rect(x + 58, y + 42, 86, 50);
+                shapeRenderer.setColor(new Color(0.08f, 0.22f, 0.25f, 1f));
+                shapeRenderer.rect(x + 68, y + 80, 56, 5);
+                shapeRenderer.rect(x + 68, y + 58, 30, 5);
+                shapeRenderer.setColor(new Color(0.36f, 0.06f, 0.08f, 1f));
+                shapeRenderer.rect(x + 130, y + 58, 8, 18);
+            }
+        }
     }
 
     private void updateCameraPosition() {
@@ -360,21 +487,21 @@ public class GameScreen implements Screen {
 
         shapeRenderer.setProjectionMatrix(hudCamera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(new Color(0.018f, 0.022f, 0.026f, 1f));
-        shapeRenderer.rect(0, 0, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
-        drawPixelPanel(Main.SCREEN_WIDTH / 2f - 215, 165, 430, 330, new Color(0.24f, 0.58f, 0.56f, 1f));
+        renderLevelCompleteBackground();
+        drawLevelCompletePanel(Main.SCREEN_WIDTH / 2f - 225, 168, 450, 335);
+        drawStarIcon(Main.SCREEN_WIDTH / 2f, 446);
         continueButton.drawShape(shapeRenderer, continueButton.contains(mouseX, mouseY));
         exitButton.drawShape(shapeRenderer, exitButton.contains(mouseX, mouseY));
         shapeRenderer.end();
 
         game.batch.setProjectionMatrix(hudCamera.combined);
         game.batch.begin();
-        font.setColor(new Color(0.88f, 0.74f, 0.45f, 1f));
+        font.setColor(new Color(1.00f, 0.78f, 0.22f, 1f));
         font.getData().setScale(1.7f);
-        font.draw(game.batch, "LEVEL COMPLETE", Main.SCREEN_WIDTH / 2f - 122, 440);
+        font.draw(game.batch, "LEVEL COMPLETE", Main.SCREEN_WIDTH / 2f - 122, 405);
         font.getData().setScale(1f);
-        font.setColor(new Color(0.76f, 0.88f, 0.82f, 1f));
-        font.draw(game.batch, "Ready for level " + nextLevelNumber, Main.SCREEN_WIDTH / 2f - 72, 392);
+        font.setColor(new Color(1.00f, 0.84f, 0.38f, 1f));
+        font.draw(game.batch, "Ready for level " + nextLevelNumber, Main.SCREEN_WIDTH / 2f - 72, 366);
         continueButton.drawText(game.batch, font);
         exitButton.drawText(game.batch, font);
         game.batch.end();
@@ -410,8 +537,58 @@ public class GameScreen implements Screen {
     }
 
     private void createLevelCompleteButtons() {
-        continueButton = new MenuButton("Continue", Main.SCREEN_WIDTH / 2f - 110, 300, 220, 48);
-        exitButton = new MenuButton("Exit", Main.SCREEN_WIDTH / 2f - 110, 228, 220, 48);
+        continueButton = new MenuButton("Continue", Main.SCREEN_WIDTH / 2f - 130, 288, 260, 50);
+        exitButton = new MenuButton("Exit", Main.SCREEN_WIDTH / 2f - 130, 220, 260, 50);
+    }
+
+    private void renderLevelCompleteBackground() {
+        shapeRenderer.setColor(new Color(0.018f, 0.014f, 0.006f, 1f));
+        shapeRenderer.rect(0, 0, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
+        drawHudGrid(70, 55, Main.SCREEN_WIDTH - 140, Main.SCREEN_HEIGHT - 110,
+                new Color(0.13f, 0.075f, 0.020f, 1f), 30f);
+    }
+
+    private void drawLevelCompletePanel(float x, float y, float width, float height) {
+        Color accent = new Color(1.00f, 0.68f, 0.08f, 1f);
+        shapeRenderer.setColor(new Color(0.006f, 0.005f, 0.004f, 1f));
+        shapeRenderer.rect(x + 10, y - 10, width, height);
+        shapeRenderer.setColor(accent);
+        shapeRenderer.rect(x, y, width, 5);
+        shapeRenderer.rect(x, y + height - 5, width, 5);
+        shapeRenderer.rect(x, y, 5, height);
+        shapeRenderer.rect(x + width - 5, y, 5, height);
+        shapeRenderer.setColor(new Color(0.030f, 0.022f, 0.012f, 1f));
+        shapeRenderer.rect(x + 5, y + 5, width - 10, height - 10);
+        drawHudGrid(x + 28, y + 36, width - 56, height - 72,
+                new Color(0.11f, 0.070f, 0.020f, 1f), 28f);
+        shapeRenderer.setColor(accent);
+        shapeRenderer.rect(x + 18, y + height - 24, width - 36, 2);
+        shapeRenderer.rect(x + 18, y + 30, width - 36, 2);
+        shapeRenderer.rect(x + 10, y + 10, 8, 8);
+        shapeRenderer.rect(x + width - 18, y + 10, 8, 8);
+        shapeRenderer.rect(x + 10, y + height - 18, 8, 8);
+        shapeRenderer.rect(x + width - 18, y + height - 18, 8, 8);
+    }
+
+    private void drawHudGrid(float x, float y, float width, float height, Color color, float step) {
+        shapeRenderer.setColor(color);
+        for (float gx = x; gx < x + width; gx += step) {
+            shapeRenderer.rect(gx, y, 1, height);
+        }
+        for (float gy = y; gy < y + height; gy += step) {
+            shapeRenderer.rect(x, gy, width, 1);
+        }
+    }
+
+    private void drawStarIcon(float x, float y) {
+        shapeRenderer.setColor(new Color(1.00f, 0.78f, 0.18f, 1f));
+        shapeRenderer.triangle(x, y + 31, x - 9, y + 7, x + 9, y + 7);
+        shapeRenderer.triangle(x - 29, y + 8, x - 5, y + 6, x - 18, y - 14);
+        shapeRenderer.triangle(x + 29, y + 8, x + 5, y + 6, x + 18, y - 14);
+        shapeRenderer.triangle(x - 18, y - 27, x, y - 10, x + 18, y - 27);
+        shapeRenderer.circle(x, y, 16);
+        shapeRenderer.setColor(new Color(1.00f, 0.92f, 0.35f, 1f));
+        shapeRenderer.circle(x, y + 3, 9);
     }
 
     private float getUiMouseX() {
