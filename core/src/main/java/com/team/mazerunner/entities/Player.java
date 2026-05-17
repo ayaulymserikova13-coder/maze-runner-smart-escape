@@ -7,7 +7,9 @@ import com.team.mazerunner.items.Crowbar;
 import com.team.mazerunner.items.Key;
 import com.team.mazerunner.items.Knife;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public class Player {
@@ -27,6 +29,7 @@ public class Player {
     private final float speed = 250f;
     private int hp = MAX_HP;
     private final Set<String> inventory = new LinkedHashSet<>();
+    private final List<HPObserver> hpObservers = new ArrayList<>();
     private String activeItem;
 
     private final int width = 32;
@@ -431,15 +434,43 @@ public class Player {
     }
 
     public void takeDamage(int amount) {
-        hp = Math.max(0, hp - amount);
+        setHp(hp - amount);
     }
 
     public void heal(int amount) {
-        hp = Math.min(MAX_HP, hp + amount);
+        setHp(hp + amount);
         healEffectTimer = HEAL_EFFECT_DURATION;
     }
 
     public void restoreHp(int value) {
-        hp = Math.min(MAX_HP, Math.max(0, value));
+        setHp(value);
+    }
+
+    public void addHPObserver(HPObserver observer) {
+        if (observer != null && !hpObservers.contains(observer)) {
+            hpObservers.add(observer);
+            observer.onHPChanged(hp);
+        }
+    }
+
+    public void removeHPObserver(HPObserver observer) {
+        hpObservers.remove(observer);
+    }
+
+    private void setHp(int value) {
+        int nextHp = Math.min(MAX_HP, Math.max(0, value));
+
+        if (hp == nextHp) {
+            return;
+        }
+
+        hp = nextHp;
+        notifyHPObservers();
+    }
+
+    private void notifyHPObservers() {
+        for (HPObserver observer : hpObservers) {
+            observer.onHPChanged(hp);
+        }
     }
 }

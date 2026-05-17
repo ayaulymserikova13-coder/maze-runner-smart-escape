@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.team.mazerunner.Main;
+import com.team.mazerunner.audio.AudioManager;
 
 public class GameOverScreen implements Screen {
 
@@ -16,6 +17,7 @@ public class GameOverScreen implements Screen {
     private final OrthographicCamera camera;
     private final ShapeRenderer shapeRenderer;
     private final BitmapFont font;
+    private final GameFacade gameFacade;
     private MenuButton retryButton;
     private MenuButton menuButton;
 
@@ -26,6 +28,7 @@ public class GameOverScreen implements Screen {
         this.camera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
         this.shapeRenderer = new ShapeRenderer();
         this.font = new BitmapFont();
+        this.gameFacade = new GameFacade(game);
         createButtons();
     }
 
@@ -121,9 +124,11 @@ public class GameOverScreen implements Screen {
         float mouseY = getUiMouseY();
 
         if (retryButton.contains(mouseX, mouseY)) {
-            game.setScreen(new GameScreen(game, levelNumber));
+            AudioManager.getInstance().playClick();
+            gameFacade.restartLevel(levelNumber);
         } else if (menuButton.contains(mouseX, mouseY)) {
-            game.setScreen(new MainMenuScreen(game));
+            AudioManager.getInstance().playClick();
+            gameFacade.goToMainMenu();
         }
     }
 
@@ -140,7 +145,10 @@ public class GameOverScreen implements Screen {
         return Main.SCREEN_HEIGHT - Gdx.input.getY() * (Main.SCREEN_HEIGHT / (float) Gdx.graphics.getHeight());
     }
 
-    @Override public void show() {}
+    @Override public void show() {
+        AudioManager.getInstance().stopMusic();
+        AudioManager.getInstance().playGameOver();
+    }
     @Override public void resize(int width, int height) {
         camera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
         createButtons();

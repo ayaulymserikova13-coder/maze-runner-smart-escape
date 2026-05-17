@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.team.mazerunner.Main;
+import com.team.mazerunner.audio.AudioManager;
 
 public class WinScreen implements Screen {
 
@@ -15,6 +16,7 @@ public class WinScreen implements Screen {
     private final OrthographicCamera camera;
     private final ShapeRenderer shapeRenderer;
     private final BitmapFont font;
+    private final GameFacade gameFacade;
     private MenuButton menuButton;
 
     public WinScreen(Main game) {
@@ -23,6 +25,7 @@ public class WinScreen implements Screen {
         this.camera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
         this.shapeRenderer = new ShapeRenderer();
         this.font = new BitmapFont();
+        this.gameFacade = new GameFacade(game);
         createButtons();
     }
 
@@ -121,7 +124,8 @@ public class WinScreen implements Screen {
         float mouseY = getUiMouseY();
 
         if (menuButton.contains(mouseX, mouseY)) {
-            game.setScreen(new MainMenuScreen(game));
+            AudioManager.getInstance().playClick();
+            gameFacade.goToMainMenu();
         }
     }
 
@@ -137,7 +141,10 @@ public class WinScreen implements Screen {
         return Main.SCREEN_HEIGHT - Gdx.input.getY() * (Main.SCREEN_HEIGHT / (float) Gdx.graphics.getHeight());
     }
 
-    @Override public void show() {}
+    @Override public void show() {
+        AudioManager.getInstance().stopMusic();
+        AudioManager.getInstance().playSuccess();
+    }
     @Override public void resize(int width, int height) {
         camera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
         createButtons();

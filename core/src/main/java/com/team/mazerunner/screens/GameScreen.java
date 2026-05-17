@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.team.mazerunner.Main;
+import com.team.mazerunner.audio.AudioManager;
+import com.team.mazerunner.entities.HPObserver;
 import com.team.mazerunner.entities.Player;
 import com.team.mazerunner.input.PlayerInputHandler;
 import com.team.mazerunner.items.Crowbar;
@@ -17,9 +19,10 @@ import com.team.mazerunner.items.Key;
 import com.team.mazerunner.items.Knife;
 import com.team.mazerunner.world.LevelMap;
 
-public class GameScreen implements Screen {
+public class GameScreen implements Screen, HPObserver {
 
     private final Main game;
+    private final GameFacade gameFacade;
 
     private OrthographicCamera camera;
     private OrthographicCamera hudCamera;
@@ -31,6 +34,8 @@ public class GameScreen implements Screen {
     private PlayerInputHandler inputHandler;
     private boolean levelComplete;
     private boolean paused;
+    private boolean gameOverRequested;
+    private int observedHp = Player.MAX_HP;
     private int nextLevelNumber;
     private MenuButton resumeButton;
     private MenuButton restartButton;
@@ -40,6 +45,7 @@ public class GameScreen implements Screen {
 
     public GameScreen(Main game) {
         this.game = game;
+        this.gameFacade = new GameFacade(game);
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
@@ -58,6 +64,7 @@ public class GameScreen implements Screen {
 
     public GameScreen(Main game, int levelNumber) {
         this.game = game;
+        this.gameFacade = new GameFacade(game);
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
@@ -76,7 +83,7 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
-
+        AudioManager.getInstance().playGameMusic();
     }
 
     @Override
@@ -118,6 +125,10 @@ public class GameScreen implements Screen {
             paused = !paused;
         }
 
+        if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
+            AudioManager.getInstance().toggleMusic();
+        }
+
         if (paused) {
             handlePauseButtons();
             return;
@@ -127,16 +138,17 @@ public class GameScreen implements Screen {
         player.update(delta);
         levelMap.update(delta, player);
 
-        if (player.isDead()) {
-            game.setScreen(new GameOverScreen(game, levelMap.getLevelNumber()));
+        if (gameOverRequested || player.isDead()) {
+            gameFacade.showGameOver(levelMap.getLevelNumber());
             return;
         }
 
         updateCameraPosition();
 
         if (levelMap.isExitReached(player)) {
+            AudioManager.getInstance().playSuccess();
             if (levelMap.isFinalLevel()) {
-                game.setScreen(new WinScreen(game));
+                gameFacade.showWin();
             } else {
                 nextLevelNumber = levelMap.getLevelNumber() + 1;
                 levelComplete = true;
@@ -321,6 +333,8 @@ public class GameScreen implements Screen {
         font.draw(game.batch, "1 KEY  2 CROWBAR  3 KNIFE  4 DISGUISE", Main.SCREEN_WIDTH - 336, Main.SCREEN_HEIGHT - 63);
         font.setColor(new Color(0.70f, 0.62f, 0.52f, 1f));
         font.draw(game.batch, "E use   F kill   Esc pause", Main.SCREEN_WIDTH - 224, 43);
+        font.draw(game.batch, AudioManager.getInstance().isMusicMuted() ? "M music off" : "M music on",
+                Main.SCREEN_WIDTH - 224, 24);
         if (player.isDisguised()) {
             font.setColor(new Color(0.58f, 0.86f, 0.78f, 1f));
             font.draw(game.batch, "DISGUISE " + (int) Math.ceil(player.getDisguiseTimeRemaining()) + "s", 190, Main.SCREEN_HEIGHT - 35);
@@ -351,12 +365,12 @@ public class GameScreen implements Screen {
             float iconX = 70 + i * 30;
             float iconY = Main.SCREEN_HEIGHT - 50;
 
-            shapeRenderer.setColor(i < player.getHp()
+            shapeRenderer.setColor(i < observedHp
                     ? new Color(0.76f, 0.11f, 0.16f, 1f)
                     : new Color(0.13f, 0.14f, 0.16f, 1f));
             shapeRenderer.rect(iconX + 4, iconY, 12, 12);
             shapeRenderer.rect(iconX, iconY + 4, 20, 8);
-            if (i < player.getHp()) {
+            if (i < observedHp) {
                 shapeRenderer.setColor(new Color(0.94f, 0.35f, 0.41f, 1f));
                 shapeRenderer.rect(iconX + 5, iconY + 9, 5, 3);
             }
@@ -472,12 +486,15 @@ public class GameScreen implements Screen {
         float mouseY = getUiMouseY();
 
         if (resumeButton.contains(mouseX, mouseY)) {
+            AudioManager.getInstance().playClick();
             paused = false;
         } else if (restartButton.contains(mouseX, mouseY)) {
-            loadLevel(levelMap.getLevelNumber());
+            AudioManager.getInstance().playClick();
+            gameFacade.restartLevel(levelMap.getLevelNumber());
             paused = false;
         } else if (menuButton.contains(mouseX, mouseY)) {
-            game.setScreen(new MainMenuScreen(game));
+            AudioManager.getInstance().playClick();
+            gameFacade.goToMainMenu();
         }
     }
 
@@ -516,18 +533,31 @@ public class GameScreen implements Screen {
         float mouseY = getUiMouseY();
 
         if (continueButton.contains(mouseX, mouseY)) {
+            AudioManager.getInstance().playClick();
             loadLevel(nextLevelNumber);
         } else if (exitButton.contains(mouseX, mouseY)) {
-            game.setScreen(new MainMenuScreen(game));
+            AudioManager.getInstance().playClick();
+            gameFacade.goToMainMenu();
         }
     }
 
     private void loadLevel(int levelNumber) {
         levelMap = new LevelMap(levelNumber);
         player = new Player(levelMap.getSpawnX(), levelMap.getSpawnY());
+        player.addHPObserver(this);
         inputHandler = new PlayerInputHandler(player, levelMap);
         levelComplete = false;
+        gameOverRequested = false;
         nextLevelNumber = levelNumber + 1;
+    }
+
+    @Override
+    public void onHPChanged(int newHP) {
+        observedHp = newHP;
+
+        if (newHP <= 0) {
+            gameOverRequested = true;
+        }
     }
 
     private void createPauseButtons() {
@@ -619,7 +649,7 @@ public class GameScreen implements Screen {
 
     @Override
     public void hide() {
-
+        AudioManager.getInstance().stopMusic();
     }
 
     @Override

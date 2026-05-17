@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.team.mazerunner.audio.AudioManager;
 import com.team.mazerunner.enemies.Enemy;
 import com.team.mazerunner.entities.Player;
 import com.team.mazerunner.items.ItemFactory;
@@ -30,7 +31,7 @@ public class LevelMap {
     private static final Color IRON_DOOR_COLOR = new Color(0.42f, 0.46f, 0.5f, 1f);
 
     private final int levelNumber;
-    private final int[][] map;
+    private final ILevelMap map;
     private final float spawnX;
     private final float spawnY;
 
@@ -123,9 +124,9 @@ public class LevelMap {
     }
 
     public void render(ShapeRenderer shapeRenderer, Player player) {
-        for (int row = 0; row < map.length; row++) {
-            for (int col = 0; col < map[row].length; col++) {
-                if (map[row][col] == WALL) {
+        for (int row = 0; row < map.getHeight(); row++) {
+            for (int col = 0; col < map.getWidth(); col++) {
+                if (map.getTile(col, row) == WALL) {
                     shapeRenderer.setColor(getWallColor());
                 } else {
                     shapeRenderer.setColor(getFloorColor(row, col));
@@ -138,7 +139,7 @@ public class LevelMap {
                         TILE_SIZE
                 );
 
-                if (map[row][col] == WALL) {
+                if (map.getTile(col, row) == WALL) {
                     renderWallDetail(shapeRenderer, col, row);
                 } else {
                     renderFloorDetail(shapeRenderer, col, row);
@@ -573,6 +574,7 @@ public class LevelMap {
                 }
 
                 player.takeDamage(1);
+                AudioManager.getInstance().playDamage();
                 player.moveTo(spawnX, spawnY);
                 resetEnemiesToPatrol();
                 damageCooldown = 3f;
@@ -594,6 +596,7 @@ public class LevelMap {
 
         player.activateDisguise();
         player.consumeItem(Disguise.TYPE);
+        AudioManager.getInstance().playPickup();
         statusMessage = "Disguise active. Enemies cannot spot you for 5 seconds.";
         return true;
     }
@@ -652,8 +655,8 @@ public class LevelMap {
             return new Vector2(targetX, targetY);
         }
 
-        int height = map.length;
-        int width = map[0].length;
+        int height = map.getHeight();
+        int width = map.getWidth();
         boolean[][] visited = new boolean[height][width];
         int[][] previousX = new int[height][width];
         int[][] previousY = new int[height][width];
@@ -740,6 +743,7 @@ public class LevelMap {
 
                 item.getItem().onPickup(player);
                 item.markPickedUp();
+                AudioManager.getInstance().playPickup();
                 statusMessage = Medkit.TYPE.equals(item.getItem().getType())
                         ? "Used medkit. Health restored."
                         : "Picked up: " + item.getItem().getType();
@@ -757,6 +761,7 @@ public class LevelMap {
             if (!door.isOpen() && door.getBounds().overlaps(interactionBounds)) {
                 boolean opened = door.tryOpen(player);
                 if (opened) {
+                    AudioManager.getInstance().playDoor();
                     statusMessage = "Door opened.";
                 } else if (player.hasItem(door.getRequiredItem())) {
                     statusMessage = "Select " + door.getRequiredItem() + " first, then press E.";
@@ -798,6 +803,7 @@ public class LevelMap {
 
         if (closestEnemy != null) {
             closestEnemy.kill();
+            AudioManager.getInstance().playStealthKill();
             damageCooldown = 0.75f;
             statusMessage = "Enemy eliminated.";
             return true;
@@ -836,11 +842,11 @@ public class LevelMap {
     }
 
     public float getPixelWidth() {
-        return map[0].length * TILE_SIZE;
+        return map.getPixelWidth();
     }
 
     public float getPixelHeight() {
-        return map.length * TILE_SIZE;
+        return map.getPixelHeight();
     }
 
     public float getSpawnX() {
@@ -855,20 +861,20 @@ public class LevelMap {
         return levelNumber >= 4;
     }
 
-    private int[][] createMap(int levelNumber) {
+    private ILevelMap createMap(int levelNumber) {
         if (levelNumber == 2) {
-            return LEVEL_2;
+            return new ArrayLevelMapAdapter(LEVEL_2);
         }
 
         if (levelNumber == 3) {
-            return LEVEL_3;
+            return new ArrayLevelMapAdapter(LEVEL_3);
         }
 
         if (levelNumber >= 4) {
-            return LEVEL_4;
+            return new ArrayLevelMapAdapter(LEVEL_4);
         }
 
-        return LEVEL_1;
+        return new ArrayLevelMapAdapter(LEVEL_1);
     }
 
     private Rectangle createExitBounds(int levelNumber) {
@@ -967,11 +973,11 @@ public class LevelMap {
     }
 
     private boolean isInsideMap(int tileX, int tileY) {
-        return tileX >= 0 && tileX < map[0].length && tileY >= 0 && tileY < map.length;
+        return tileX >= 0 && tileX < map.getWidth() && tileY >= 0 && tileY < map.getHeight();
     }
 
     private boolean isTileBlockedForPath(int tileX, int tileY) {
-        if (map[tileY][tileX] == WALL) {
+        if (map.getTile(tileX, tileY) == WALL) {
             return true;
         }
 
@@ -1002,24 +1008,24 @@ public class LevelMap {
         int bottomTile = (int)(y / TILE_SIZE);
         int topTile = (int)((y + height - 1) / TILE_SIZE);
 
-        if (leftTile < 0 || rightTile >= map[0].length || bottomTile < 0 || topTile >= map.length) {
+        if (leftTile < 0 || rightTile >= map.getWidth() || bottomTile < 0 || topTile >= map.getHeight()) {
             return true;
         }
 
-        return map[bottomTile][leftTile] == WALL ||
-                map[bottomTile][rightTile] == WALL ||
-                map[topTile][leftTile] == WALL ||
-                map[topTile][rightTile] == WALL;
+        return map.getTile(leftTile, bottomTile) == WALL ||
+                map.getTile(rightTile, bottomTile) == WALL ||
+                map.getTile(leftTile, topTile) == WALL ||
+                map.getTile(rightTile, topTile) == WALL;
     }
 
     private boolean isWallPoint(float x, float y) {
         int tileX = (int) (x / TILE_SIZE);
         int tileY = (int) (y / TILE_SIZE);
 
-        if (tileX < 0 || tileX >= map[0].length || tileY < 0 || tileY >= map.length) {
+        if (tileX < 0 || tileX >= map.getWidth() || tileY < 0 || tileY >= map.getHeight()) {
             return true;
         }
 
-        return map[tileY][tileX] == WALL;
+        return map.getTile(tileX, tileY) == WALL;
     }
 }

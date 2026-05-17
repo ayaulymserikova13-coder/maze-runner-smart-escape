@@ -1,6 +1,7 @@
 package com.team.mazerunner.screens;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -8,6 +9,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.team.mazerunner.Main;
+import com.team.mazerunner.audio.AudioManager;
 
 public class MainMenuScreen implements Screen {
 
@@ -15,6 +17,7 @@ public class MainMenuScreen implements Screen {
     private final OrthographicCamera camera;
     private final ShapeRenderer shapeRenderer;
     private final BitmapFont font;
+    private final GameFacade gameFacade;
     private MenuButton playButton;
     private MenuButton quitButton;
 
@@ -24,12 +27,13 @@ public class MainMenuScreen implements Screen {
         this.camera.setToOrtho(false, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT);
         this.shapeRenderer = new ShapeRenderer();
         this.font = new BitmapFont();
+        this.gameFacade = new GameFacade(game);
         createButtons();
     }
 
     @Override
     public void show() {
-
+        AudioManager.getInstance().playMenuMusic();
     }
 
     @Override
@@ -61,6 +65,9 @@ public class MainMenuScreen implements Screen {
         font.getData().setScale(1f);
         font.setColor(new Color(0.54f, 0.94f, 0.88f, 1f));
         font.draw(game.batch, "2D STEALTH MAZE ESCAPE", Main.SCREEN_WIDTH / 2f - 94, 380);
+        font.setColor(new Color(0.46f, 0.74f, 0.70f, 1f));
+        font.draw(game.batch, AudioManager.getInstance().isMusicMuted() ? "M - MUSIC OFF" : "M - MUSIC ON",
+                Main.SCREEN_WIDTH / 2f - 54, 198);
         playButton.drawText(game.batch, font);
         quitButton.drawText(game.batch, font);
         game.batch.end();
@@ -154,6 +161,10 @@ public class MainMenuScreen implements Screen {
     }
 
     private void handleInput() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
+            AudioManager.getInstance().toggleMusic();
+        }
+
         if (!Gdx.input.justTouched()) {
             return;
         }
@@ -162,8 +173,10 @@ public class MainMenuScreen implements Screen {
         float mouseY = getUiMouseY();
 
         if (playButton.contains(mouseX, mouseY)) {
-            game.setScreen(new GameScreen(game));
+            AudioManager.getInstance().playClick();
+            gameFacade.startGame();
         } else if (quitButton.contains(mouseX, mouseY)) {
+            AudioManager.getInstance().playClick();
             Gdx.app.exit();
         }
 

@@ -2,6 +2,7 @@ package com.team.mazerunner;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.team.mazerunner.audio.AudioManager;
 import com.team.mazerunner.screens.MainMenuScreen;
 
 public class Main extends Game {
@@ -15,6 +16,7 @@ public class Main extends Game {
     public void create() {
 
         batch = new SpriteBatch();
+        AudioManager.getInstance().load();
 
         setScreen(new MainMenuScreen(this));
     }
@@ -23,6 +25,7 @@ public class Main extends Game {
     public void dispose() {
 
         batch.dispose();
+        AudioManager.getInstance().dispose();
         super.dispose();
     }
 }
