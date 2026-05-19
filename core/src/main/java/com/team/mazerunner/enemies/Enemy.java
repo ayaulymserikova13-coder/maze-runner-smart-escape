@@ -829,6 +829,21 @@ public class Enemy {
             return;
         }
 
+        if (isInStealthKillPosition(player, levelMap) &&
+                state != EnemyState.CHASE &&
+                state != EnemyState.ALERT) {
+            vulnerableToStealthKill = timePlayerBehind < STEALTH_REACTION_TIME;
+            timePlayerBehind += delta;
+
+            if (timePlayerBehind >= STEALTH_REACTION_TIME) {
+                timePlayerBehind = 0f;
+                updateLastKnownPlayerPosition(player, levelMap);
+                facePlayer(player);
+                setState(EnemyState.CHASE);
+            }
+            return;
+        }
+
         if (state == EnemyState.CHASE) {
             timeSinceSeenPlayer += delta;
             return;
